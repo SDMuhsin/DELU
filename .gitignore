@@ -5,3 +5,5 @@ data
 **.pt
 **.pth
 **.pyc
+
+sbatch
