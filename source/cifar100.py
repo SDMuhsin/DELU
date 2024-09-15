@@ -24,7 +24,7 @@ torch.backends.cudnn.deterministic = True
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # Hyperparameters
-num_epochs = 5
+num_epochs = 10
 learning_rate = 0.001
 batch_size = 128
 
@@ -49,9 +49,29 @@ train_loader = DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle=
 test_loader = DataLoader(dataset=test_dataset, batch_size=batch_size, shuffle=False)
 
 # Load pre-trained ResNet-18 and modify for 100 classes
+class SmoothExponentialLinear(nn.Module):
+    def forward(self, x):
+        return x * torch.exp(-torch.exp(-x))
+
+
+def replace_relu_with_sel(module):
+    """
+    Recursively replaces all ReLU activations in the model with SmoothExponentialLinear (SEL).
+    Args:
+        module (nn.Module): The PyTorch model or module where replacements are needed.
+    """
+    for name, child in module.named_children():
+        if isinstance(child, nn.ReLU):
+            # If the child is ReLU, replace it with SmoothExponentialLinear
+            setattr(module, name, SmoothExponentialLinear())
+        else:
+            # Recursively apply to child modules
+            replace_relu_with_sel(child)
+
 model = resnet18(pretrained=False)
 model.fc = nn.Linear(model.fc.in_features, 100)
 model = model.to(device)
+replace_relu_with_sel(model)
 
 # Loss and optimizer
 criterion = nn.CrossEntropyLoss()
