@@ -15,6 +15,7 @@ def filter_rows(row, args):
 
 def main():
     parser = argparse.ArgumentParser(description='Filter and display MNIST results.')
+    parser.add_argument('--task',type=str, help='mnist,fmnist,cifar10,cifar100,svhn')
     parser.add_argument('--model', type=str, help='Model name')
     parser.add_argument('--epochs', type=int, help='Total epochs')
     parser.add_argument('--batch-size', type=int, help='Batch size')
@@ -23,7 +24,7 @@ def main():
     parser.add_argument('--activation', type=str, help='Activation function')
     args = parser.parse_args()
 
-    with open('./saves/mnist_results.txt', 'r') as f:
+    with open(f'./saves/{args.task}_results.txt', 'r') as f:
         reader = csv.DictReader(f)
         data = [row for row in reader if filter_rows(row, args)]
 
