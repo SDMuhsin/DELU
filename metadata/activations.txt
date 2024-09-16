@@ -1,0 +1,4 @@
+DELU
+ReLU
+LeakyReLU
+GELU
