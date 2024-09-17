@@ -27,6 +27,7 @@ import pathlib
 import datasets
 import evaluate
 import torch
+import torch.nn as nn
 from accelerate import Accelerator
 from accelerate.logging import get_logger
 from accelerate.utils import set_seed
@@ -50,6 +51,8 @@ from transformers.utils import check_min_version, send_example_telemetry
 from transformers.utils.versions import require_version
 
 from models.model_factory import create_model
+from common.utility import replace_activations
+from common.utility import get_activation_by_name
 # Will error if the minimal version of Transformers is not installed. Remove at your own risks.
 
 logger = get_logger(__name__)
@@ -221,6 +224,13 @@ def parse_args():
         type=str,
         default='n'
     )
+    parser.add_argument(
+        "--store_best_result",
+        type=str,
+        default='n',
+        choices=['n','y']
+    )
+    parser.add_argument('--activation', type=str, default='ReLU',choices=['ReLU', 'LeakyReLU', 'ELU', 'SELU', 'GELU', 'Tanh', 'Sigmoid','Hardswish', 'Mish', 'SiLU', 'Softplus', 'Softsign', 'Hardshrink','Softshrink', 'Tanhshrink', 'PReLU', 'RReLU', 'CELU', 'Hardtanh','DELU'],help='Activation function to use in the model')
     args = parser.parse_args()
 
     # Sanity checks
@@ -256,7 +266,8 @@ def compute_with_retry(metric, max_retries=10, initial_wait=1):
 def main():
 
     args = parse_args()
-    
+
+    args.job_id += args.activation
     folder_path = f"./saves/{args.job_id}_SPLIT" if args.split_train == 'y' else f"./saves/{args.job_id}"
     pathlib.Path(folder_path).mkdir(exist_ok=True)
     eval_save_file_name = f'{folder_path}/results_rg_{args.task_name}_{args.model_name_or_path.split("/")[-1]}.json'
@@ -396,6 +407,13 @@ def main():
         model.save_pretrained(model_path)
     else:
         model = AutoModelForSequenceClassification.from_pretrained(model_path)
+    
+    '''
+        Replace model ReLU with new activation
+    '''
+    activation = get_activation_by_name(args.activation)
+    print(f"Replacing ReLU with",args.activation)
+    replace_activations(model, nn.ReLU, activation)
 
     # Preprocessing the datasets
     if args.task_name is not None:
@@ -596,6 +614,7 @@ def main():
         exit()
     progress_bar.update(completed_steps)
     eval_result = None
+    best_eval_result = {'a':-1}
     for epoch in range(starting_epoch, args.num_train_epochs):
         model.train()
         if args.with_tracking:
@@ -651,6 +670,9 @@ def main():
 
         eval_metric = compute_with_retry(metric)
         eval_result = eval_metric
+        if(list(eval_result.values())[0] > list(best_eval_result.values())[0]):
+            best_eval_result = eval_result
+
         logger.info(f"epoch {epoch}: {eval_metric}")
 
         if args.with_tracking:
@@ -696,7 +718,7 @@ def main():
         ) 
     
     save_data = json.load(open(eval_save_file_name,'r'))
-    save_data[str(args.seed)] = eval_result
+    save_data[str(args.seed)] = eval_result if args.store_best_result == 'n' else best_eval_result
     
     json.dump(
         save_data,

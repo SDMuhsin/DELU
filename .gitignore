@@ -1,6 +1,7 @@
 env
 saves
 data
+downloads
 
 **.pt
 **.pth
