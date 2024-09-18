@@ -13,6 +13,7 @@ from common.utility import replace_activations
 from common.utility import get_activation_by_name
 from common.cnn_csv_utils import initialize_csv, update_results
 import csv
+import time
 
 def set_seed(seed):
     random.seed(seed)
@@ -52,9 +53,9 @@ def get_model(model_name):
     model.fc = nn.Linear(num_ftrs, 100)
 
     return model
-
-def train(model, train_loader, optimizer, criterion, device):
+def train(model, train_loader, optimizer, criterion, device, epoch, total_epochs):
     model.train()
+    start_time = time.time()
     for batch_idx, (data, target) in enumerate(train_loader):
         data, target = data.to(device), target.to(device)
         optimizer.zero_grad()
@@ -63,6 +64,13 @@ def train(model, train_loader, optimizer, criterion, device):
         loss.backward()
         optimizer.step()
 
+        elapsed_time = time.time() - start_time
+        progress = (batch_idx + 1) / len(train_loader)
+        estimated_total_time = elapsed_time / progress
+        remaining_time = estimated_total_time - elapsed_time
+        
+        print(f"\rEpoch {epoch}/{total_epochs} - Batch {batch_idx+1}/{len(train_loader)} - "
+              f"Est. time remaining: {remaining_time:.2f}s", end="")
 def evaluate(model, test_loader, device):
     model.eval()
     all_preds = []
@@ -94,7 +102,7 @@ def main(args):
     train_loader, test_loader = load_data(args.data_dir, args.batch_size)
     model = get_model(args.model).to(device)
 
-    activation = get_activation_by_name(args.activation)
+    activation = get_activation_by_name(args.activation, float(args.a) , float(args.b))
 
     replace_activations(model, nn.ReLU, activation)
 
@@ -106,7 +114,7 @@ def main(args):
     best_epoch = 0
 
     for epoch in range(1, args.epochs + 1):
-        train(model, train_loader, optimizer, criterion, device)
+        train(model, train_loader, optimizer, criterion, device, epoch, args.epochs)
         top1_accuracy, top5_accuracy, precision, recall, f1 = evaluate(model, test_loader, device)
 
         print(f"Epoch {epoch}/{args.epochs}")
@@ -127,10 +135,14 @@ def main(args):
     os.makedirs('./saves', exist_ok=True)
     file_path = './saves/cifar100_results.txt'
     initialize_csv(file_path)
+    
+    activation_name = args.activation
+    if(args.activation == 'DELU'):
+        activation_name += f"_a{args.a}_b{args.b}"
     new_result = {
         'Model': args.model,
         'Total Epochs': args.epochs,
-        'Activation Function': args.activation,
+        'Activation Function': activation_name,
         'Batch Size': args.batch_size,
         'Seed': args.seed,
         'Learning Rate': args.lr,
@@ -157,5 +169,7 @@ if __name__ == '__main__':
     parser.add_argument('--lr', type=float, default=0.001, help='learning rate')
     parser.add_argument('--seed', type=int, default=41, help='random seed')
     parser.add_argument('--activation', type=str, default='ReLU',choices=['ReLU', 'LeakyReLU', 'ELU', 'SELU', 'GELU', 'Tanh', 'Sigmoid','Hardswish', 'Mish', 'SiLU', 'Softplus', 'Softsign', 'Hardshrink','Softshrink', 'Tanhshrink', 'PReLU', 'RReLU', 'CELU', 'Hardtanh','DELU'],help='Activation function to use in the model')
+    parser.add_argument('--a',type=float,default=1)
+    parser.add_argument('--b',type=float,default=1)
     args = parser.parse_args()
     main(args)

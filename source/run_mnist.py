@@ -13,6 +13,7 @@ from common.utility import replace_activations
 from common.utility import get_activation_by_name
 from common.cnn_csv_utils import initialize_csv, update_results
 import csv
+import time
 
 def set_seed(seed):
     random.seed(seed)
@@ -39,33 +40,66 @@ def load_data(data_dir, batch_size):
     return train_loader, test_loader
 
 class SmallNet(nn.Module):
-    def __init__(self, num_classes=10):
+    def __init__(self, activation_func='ReLU'):
         super(SmallNet, self).__init__()
-        self.features = nn.Sequential(
-            nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1),
-            nn.ReLU(inplace=True),
-            nn.MaxPool2d(kernel_size=2, stride=2),
-            nn.Conv2d(64, 32, kernel_size=3, stride=1, padding=1),
-            nn.ReLU(inplace=True),
-            nn.MaxPool2d(kernel_size=2, stride=2),
-            nn.Conv2d(32, 32, kernel_size=3, stride=1, padding=1),
-            nn.ReLU(inplace=True),
-            nn.MaxPool2d(kernel_size=2, stride=2),
-        )
-        self.avgpool = nn.AdaptiveAvgPool2d((7, 7))
-        self.classifier = nn.Sequential(
-            nn.Linear(32 * 7 * 7, 32),
-            nn.ReLU(inplace=True),
-            nn.Dropout(),
-            nn.Linear(32, num_classes),
+
+        # Dictionary of available activation functions (unchanged)
+        self.activation_functions = {
+            'ReLU': nn.ReLU(),
+            'LeakyReLU': nn.LeakyReLU(),
+            'ELU': nn.ELU(),
+            'SELU': nn.SELU(),
+            'GELU': nn.GELU(),
+            'Tanh': nn.Tanh(),
+            'Sigmoid': nn.Sigmoid(),
+            'Hardswish': nn.Hardswish(),
+            'Mish': nn.Mish(),
+            'SiLU': nn.SiLU(),  # Also known as Swish
+            'Softplus': nn.Softplus(),
+            'Softsign': nn.Softsign(),
+            'Hardshrink': nn.Hardshrink(),
+            'Softshrink': nn.Softshrink(),
+            'Tanhshrink': nn.Tanhshrink(),
+            'PReLU': nn.PReLU(),
+            'RReLU': nn.RReLU(),
+            'CELU': nn.CELU(),
+            'Hardtanh': nn.Hardtanh(),
+        }
+
+        # Select the activation function
+        self.activation = self.activation_functions[activation_func]
+
+        # Modified first layer to accept 3 input channels
+        self.layer1 = nn.Sequential(
+            nn.Conv2d(in_channels=3, out_channels=32, kernel_size=3, padding=1),
+            nn.BatchNorm2d(32),
+            self.activation,
+            nn.MaxPool2d(kernel_size=2, stride=2)
         )
 
+        # Adjust the second layer to handle the larger input size
+        self.layer2 = nn.Sequential(
+            nn.Conv2d(in_channels=32, out_channels=64, kernel_size=3, padding=1),
+            nn.BatchNorm2d(64),
+            self.activation,
+            nn.MaxPool2d(2)
+        )
+
+        # Adjust the fully connected layers for the new input size
+        self.fc1 = nn.Linear(in_features=64*56*56, out_features=256)
+        self.drop = nn.Dropout2d(0.25)
+        self.fc2 = nn.Linear(in_features=256, out_features=64)
+        self.classifier = nn.Linear(in_features=64, out_features=10)
+
     def forward(self, x):
-        x = self.features(x)
-        x = self.avgpool(x)
-        x = torch.flatten(x, 1)
-        x = self.classifier(x)
-        return x
+        out = self.layer1(x)
+        out = self.layer2(out)
+        out = out.view(out.size(0), -1)
+        out = self.fc1(out)
+        out = self.drop(out)
+        out = self.fc2(out)
+        out = self.classifier(out)
+        return out  # Make sure to return the output
 
 def get_model(model_name):
     if model_name == 'resnet18':
@@ -82,12 +116,33 @@ def get_model(model_name):
         model.classifier = nn.Linear(num_ftrs, 10)
     elif model_name == 'smallnet':
         model = SmallNet()
+        num_ftrs = model.classifier.in_features
+        model.classifier = nn.Linear(num_ftrs, 10)
     else:
         raise ValueError(f"Unsupported model: {model_name}")
 
     return model
+def train(model, train_loader, optimizer, criterion, device, epoch, total_epochs):
+    model.train()
+    start_time = time.time()
+    for batch_idx, (data, target) in enumerate(train_loader):
+        data, target = data.to(device), target.to(device)
+        optimizer.zero_grad()
+        output = model(data)
+        loss = criterion(output, target)
+        loss.backward()
+        optimizer.step()
 
-def train(model, train_loader, optimizer, criterion, device):
+        elapsed_time = time.time() - start_time
+        progress = (batch_idx + 1) / len(train_loader)
+        estimated_total_time = elapsed_time / progress
+        remaining_time = estimated_total_time - elapsed_time
+        
+        print(f"\rEpoch {epoch}/{total_epochs} - Batch {batch_idx+1}/{len(train_loader)} - "
+              f"Est. time remaining: {remaining_time:.2f}s", end="")
+
+    print()
+def train_old(model, train_loader, optimizer, criterion, device):
     model.train()
     for batch_idx, (data, target) in enumerate(train_loader):
         data, target = data.to(device), target.to(device)
@@ -140,7 +195,8 @@ def main(args):
     best_epoch = 0
 
     for epoch in range(1, args.epochs + 1):
-        train(model, train_loader, optimizer, criterion, device)
+        train(model, train_loader, optimizer, criterion, device, epoch, args.epochs)
+        #train(model, train_loader, optimizer, criterion, device)
         top1_accuracy, top5_accuracy, precision, recall, f1 = evaluate(model, test_loader, device)
 
         print(f"Epoch {epoch}/{args.epochs}")
