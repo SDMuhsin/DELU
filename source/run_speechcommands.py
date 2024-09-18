@@ -10,6 +10,7 @@ from torchvision.models import resnet18, resnet34, resnet50
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 import numpy as np
 import os
+from common.cnn_csv_utils import initialize_csv, update_results
 
 def get_args():
     parser = argparse.ArgumentParser()

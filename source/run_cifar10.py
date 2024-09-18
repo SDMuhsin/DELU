@@ -12,6 +12,7 @@ from common.DELU import DELU
 from common.utility import replace_activations
 from common.utility import get_activation_by_name
 import csv
+from common.cnn_csv_utils import initialize_csv, update_results
 
 def set_seed(seed):
     random.seed(seed)
@@ -125,42 +126,23 @@ def main(args):
     # Save results
     os.makedirs('./saves', exist_ok=True)
     file_path = './saves/cifar10_results.txt'
+    initialize_csv(file_path)
+    new_result = {
+        'Model': args.model,
+        'Total Epochs': args.epochs,
+        'Activation Function': args.activation,
+        'Batch Size': args.batch_size,
+        'Seed': args.seed,
+        'Learning Rate': args.lr,
+        'Best Epoch': best_epoch,
+        'Top-1 Accuracy': best_top1_accuracy,
+        'Top-5 Accuracy': top5_accuracy,
+        'Precision': precision,
+        'Recall': recall,
+        'F1-score': f1
+    }
+    update_results(file_path, new_result)
 
-    # Read existing results
-    existing_results = []
-    if os.path.isfile(file_path):
-        with open(file_path, 'r', newline='') as f:
-            reader = csv.reader(f)
-            existing_results = list(reader)
-
-    # Prepare the header and new result
-    header = ['Model', 'Total Epochs', 'Activation Function', 'Batch Size', 'Seed', 'Learning Rate',
-              'Best Epoch', 'Top-1 Accuracy', 'Top-5 Accuracy', 'Precision', 'Recall', 'F1-score']
-    new_result = [args.model, args.epochs, args.activation, args.batch_size, args.seed, args.lr,
-                  best_epoch, best_top1_accuracy, top5_accuracy, precision, recall, f1]
-
-    # Update or add the new result
-    if existing_results:
-        if existing_results[0] == header:
-            existing_results = existing_results[1:]  # Remove header from existing results
-        
-        updated = False
-        for i, row in enumerate(existing_results):
-            if row[:7] == new_result[:7]:  # Compare columns from Model to Best Epoch
-                existing_results[i] = new_result
-                updated = True
-                break
-        
-        if not updated:
-            existing_results.append(new_result)
-    else:
-        existing_results = [new_result]
-
-    # Write updated results back to file
-    with open(file_path, 'w', newline='') as f:
-        writer = csv.writer(f)
-        writer.writerow(header)
-        writer.writerows(existing_results)
 
     print(f"Results saved to {file_path}")
 

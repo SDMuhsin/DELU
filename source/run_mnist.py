@@ -11,6 +11,7 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_sc
 from common.DELU import DELU
 from common.utility import replace_activations
 from common.utility import get_activation_by_name
+from common.cnn_csv_utils import initialize_csv, update_results
 import csv
 
 def set_seed(seed):
@@ -37,20 +38,52 @@ def load_data(data_dir, batch_size):
 
     return train_loader, test_loader
 
+class SmallNet(nn.Module):
+    def __init__(self, num_classes=10):
+        super(SmallNet, self).__init__()
+        self.features = nn.Sequential(
+            nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=2, stride=2),
+            nn.Conv2d(64, 32, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=2, stride=2),
+            nn.Conv2d(32, 32, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=2, stride=2),
+        )
+        self.avgpool = nn.AdaptiveAvgPool2d((7, 7))
+        self.classifier = nn.Sequential(
+            nn.Linear(32 * 7 * 7, 32),
+            nn.ReLU(inplace=True),
+            nn.Dropout(),
+            nn.Linear(32, num_classes),
+        )
+
+    def forward(self, x):
+        x = self.features(x)
+        x = self.avgpool(x)
+        x = torch.flatten(x, 1)
+        x = self.classifier(x)
+        return x
+
 def get_model(model_name):
     if model_name == 'resnet18':
         model = models.resnet18(pretrained=False)
+        num_ftrs = model.fc.in_features
+        model.fc = nn.Linear(num_ftrs, 10)
     elif model_name == 'vgg16':
         model = models.vgg16(pretrained=False)
+        num_ftrs = model.classifier[6].in_features
+        model.classifier[6] = nn.Linear(num_ftrs, 10)
     elif model_name == 'densenet121':
         model = models.densenet121(pretrained=False)
+        num_ftrs = model.classifier.in_features
+        model.classifier = nn.Linear(num_ftrs, 10)
+    elif model_name == 'smallnet':
+        model = SmallNet()
     else:
         raise ValueError(f"Unsupported model: {model_name}")
-
-
-    # Modify the last layer for MNIST (10 classes)
-    num_ftrs = model.fc.in_features
-    model.fc = nn.Linear(num_ftrs, 10)
 
     return model
 
@@ -127,48 +160,29 @@ def main(args):
     # Save results
     os.makedirs('./saves', exist_ok=True)
     file_path = './saves/mnist_results.txt'
-
-    # Read existing results
-    existing_results = []
-    if os.path.isfile(file_path):
-        with open(file_path, 'r', newline='') as f:
-            reader = csv.reader(f)
-            existing_results = list(reader)
-
-    # Prepare the header and new result
-    header = ['Model', 'Total Epochs', 'Activation Function', 'Batch Size', 'Seed', 'Learning Rate',
-              'Best Epoch', 'Top-1 Accuracy', 'Top-5 Accuracy', 'Precision', 'Recall', 'F1-score']
-    new_result = [args.model, args.epochs, args.activation, args.batch_size, args.seed, args.lr,
-                  best_epoch, best_top1_accuracy, top5_accuracy, precision, recall, f1]
-
-    # Update or add the new result
-    if existing_results:
-        if existing_results[0] == header:
-            existing_results = existing_results[1:]  # Remove header from existing results
-        
-        updated = False
-        for i, row in enumerate(existing_results):
-            if row[:7] == new_result[:7]:  # Compare columns from Model to Best Epoch
-                existing_results[i] = new_result
-                updated = True
-                break
-        
-        if not updated:
-            existing_results.append(new_result)
-    else:
-        existing_results = [new_result]
-
-    # Write updated results back to file
-    with open(file_path, 'w', newline='') as f:
-        writer = csv.writer(f)
-        writer.writerow(header)
-        writer.writerows(existing_results)
+    initialize_csv(file_path)
+    new_result = {
+        'Model': args.model,
+        'Total Epochs': args.epochs,
+        'Activation Function': args.activation,
+        'Batch Size': args.batch_size,
+        'Seed': args.seed,
+        'Learning Rate': args.lr,
+        'Best Epoch': best_epoch,
+        'Top-1 Accuracy': best_top1_accuracy,
+        'Top-5 Accuracy': top5_accuracy,
+        'Precision': precision,
+        'Recall': recall,
+        'F1-score': f1
+    }
+    update_results(file_path, new_result)
 
     print(f"Results saved to {file_path}")
 
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='MNIST CNN Training')
-    parser.add_argument('--model', type=str, default='resnet18', choices=['resnet18', 'vgg16', 'densenet121'],
+    parser.add_argument('--model', type=str, default='resnet18', choices=['resnet18', 'vgg16', 'densenet121','smallnet'],
                         help='model architecture')
     parser.add_argument('--data-dir', type=str, default='./data', help='data directory')
     parser.add_argument('--batch-size', type=int, default=64, help='input batch size for training')

@@ -1,4 +1,5 @@
 DELU
 ReLU
 LeakyReLU
+ELU
 GELU
