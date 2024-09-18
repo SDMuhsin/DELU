@@ -414,7 +414,7 @@ def main():
     activation = get_activation_by_name(args.activation)
     print(f"Replacing ReLU with",args.activation)
     replace_activations(model, nn.ReLU, activation)
-
+    replace_activations(model,nn.GELU,activation)
     # Preprocessing the datasets
     if args.task_name is not None:
         sentence1_key, sentence2_key = task_to_keys[args.task_name]
