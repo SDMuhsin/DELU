@@ -127,10 +127,13 @@ def main(args):
     os.makedirs('./saves', exist_ok=True)
     file_path = './saves/cifar10_results.txt'
     initialize_csv(file_path)
+    activation_name = args.activation
+    if(args.activation == 'DELU'):
+        activation_name += f"_a{args.a}_b{args.b}"
     new_result = {
         'Model': args.model,
         'Total Epochs': args.epochs,
-        'Activation Function': args.activation,
+        'Activation Function': activation_name,
         'Batch Size': args.batch_size,
         'Seed': args.seed,
         'Learning Rate': args.lr,
@@ -156,5 +159,7 @@ if __name__ == '__main__':
     parser.add_argument('--lr', type=float, default=0.001, help='learning rate')
     parser.add_argument('--seed', type=int, default=41, help='random seed')
     parser.add_argument('--activation', type=str, default='ReLU',choices=['ReLU', 'LeakyReLU', 'ELU', 'SELU', 'GELU', 'Tanh', 'Sigmoid','Hardswish', 'Mish', 'SiLU', 'Softplus', 'Softsign', 'Hardshrink','Softshrink', 'Tanhshrink', 'PReLU', 'RReLU', 'CELU', 'Hardtanh','DELU'],help='Activation function to use in the model')
+    parser.add_argument('--a',type=float,default=1)
+    parser.add_argument('--b',type=float,default=1)
     args = parser.parse_args()
     main(args)
