@@ -38,6 +38,7 @@ def replace_activations(module,old_activation,new_activation):
     for name, child in module.named_children():
         if isinstance(child, old_activation):
             # If the child is old_activation, replace with new activation
+            print(f"Replacing {name}")
             setattr(module, name, new_activation)
         else:
             # Recursively apply to child modules

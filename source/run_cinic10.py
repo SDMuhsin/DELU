@@ -75,9 +75,11 @@ def get_model(model_name):
         model = models.densenet121(pretrained=False)
     else:
         raise ValueError(f"Unsupported model: {model_name}")
-
+    
+    print(f"\t Model instantiated")
     # Modify the last layer for CINIC-10 (10 classes)
     num_ftrs = model.fc.in_features
+    print(f"\t Classifier attached")
     model.fc = nn.Linear(num_ftrs, 10)
 
     return model
@@ -130,13 +132,18 @@ def evaluate(model, test_loader, device):
 def main(args):
     set_seed(args.seed)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
+    
+    print(f"Loading dataset")
     train_loader, test_loader = load_data(args.data_dir, args.batch_size)
+    print(f"Loaded dataset \n Loading model")
+
     model = get_model(args.model).to(device)
+    print(f"Model loaded and transferred to GPU ")
 
     activation = get_activation_by_name(args.activation)
-
+    print(f"Got activation")
     replace_activations(model, nn.ReLU, activation)
+    print(f"Replaced activations")
 
     optimizer = optim.Adam(model.parameters(), lr=args.lr)
     criterion = nn.CrossEntropyLoss()
