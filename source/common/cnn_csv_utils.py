@@ -114,8 +114,8 @@ def configuration_exists(args):
             row_key = (
                 row['Model'],
                 args.task,  # Assuming the task is always MNIST
-                int(row['Batch Size']),
-                int(row['Total Epochs']),
+                int(float((row['Batch Size'])),
+                int(float((row['Total Epochs'])),
                 float(row['Learning Rate']),
                 row['Activation Function'],
                 int(row['Seed'])
