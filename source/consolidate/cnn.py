@@ -1,21 +1,21 @@
 import argparse
-import csv
+import pandas as pd
 from tabulate import tabulate
 
-def filter_rows(row, args):
+def filter_rows(df, args):
     conditions = [
-        args.model is None or row['Model'] == args.model,
-        args.epochs is None or int(row['Total Epochs']) == args.epochs,
-        args.batch_size is None or int(row['Batch Size']) == args.batch_size,
-        args.lr is None or float(row['Learning Rate']) == args.lr,
-        args.seed is None or int(row['Seed']) == args.seed,
-        args.activation is None or row['Activation Function'] == args.activation
+        (args.model is None) | (df['Model'] == args.model),
+        (args.epochs is None) | (df['Total Epochs'].astype(int) == args.epochs),
+        (args.batch_size is None) | (df['Batch Size'].astype(int) == args.batch_size),
+        (args.lr is None) | (df['Learning Rate'].astype(float) == args.lr),
+        (args.seed is None) | (df['Seed'].astype(int) == args.seed),
+        (args.activation is None) | (df['Activation Function'] == args.activation)
     ]
-    return all(conditions)
+    return df[pd.concat(conditions, axis=1).all(axis=1)]
 
 def main():
     parser = argparse.ArgumentParser(description='Filter and display MNIST results.')
-    parser.add_argument('--task',type=str, help='mnist,fmnist,cifar10,cifar100,svhn')
+    parser.add_argument('--task', type=str, help='mnist,fmnist,cifar10,cifar100,svhn')
     parser.add_argument('--model', type=str, help='Model name')
     parser.add_argument('--epochs', type=int, help='Total epochs')
     parser.add_argument('--batch-size', type=int, help='Batch size')
@@ -24,13 +24,16 @@ def main():
     parser.add_argument('--activation', type=str, help='Activation function')
     args = parser.parse_args()
 
-    with open(f'./saves/{args.task}_results.txt', 'r') as f:
-        reader = csv.DictReader(f)
-        data = [row for row in reader if filter_rows(row, args)]
+    # Read the CSV file using pandas
+    df = pd.read_csv(f'./saves/{args.task}_results.txt')
 
-    if data:
-        headers = data[0].keys()
-        table = [[row[col] for col in headers] for row in data]
+    # Apply filters
+    filtered_df = filter_rows(df, args)
+
+    if not filtered_df.empty:
+        # Convert DataFrame to a list of lists for tabulate
+        table = filtered_df.values.tolist()
+        headers = filtered_df.columns.tolist()
         print(tabulate(table, headers=headers, tablefmt='grid'))
     else:
         print("No matching rows found.")
