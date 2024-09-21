@@ -13,8 +13,7 @@ from common.utility import replace_activations
 from common.utility import get_activation_by_name
 import csv
 import time
-from common.cnn_csv_utils import initialize_csv, update_results
-
+from common.cnn_csv_utils import * 
 def set_seed(seed):
     random.seed(seed)
     np.random.seed(seed)
@@ -101,6 +100,8 @@ def evaluate(model, test_loader, device):
     return top1_accuracy, top5_accuracy, precision, recall, f1
 
 def main(args):
+    if(configuration_exists(args)):
+        exit()
     set_seed(args.seed)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -137,31 +138,9 @@ def main(args):
             best_epoch = epoch
 
     # Save results
-    os.makedirs('./saves', exist_ok=True)
-    file_path = './saves/stl10_results.txt'
-
-    activation_name = args.activation
-    if(args.activation == 'DELU'):
-        activation_name += f"_a{args.a}_b{args.b}"
-    new_result = {
-        'Model': args.model,
-        'Total Epochs': args.epochs,
-        'Activation Function': activation_name,
-        'Batch Size': args.batch_size,
-        'Seed': args.seed,
-        'Learning Rate': args.lr,
-        'Best Epoch': best_epoch,
-        'Top-1 Accuracy': best_top1_accuracy,
-        'Top-5 Accuracy': top5_accuracy,
-        'Precision': precision,
-        'Recall': recall,
-        'F1-score': f1
-    }
-
-    update_results(file_path, new_result)
+    save_results(args, best_epoch, best_top1_accuracy, top5_accuracy, precision, recall, f1)
 
 
-    print(f"Results saved to {file_path}")
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='STL-10 CNN Training')
@@ -175,6 +154,8 @@ if __name__ == '__main__':
     parser.add_argument('--activation', type=str, default='ReLU',choices=['ReLU', 'LeakyReLU', 'ELU', 'SELU', 'GELU', 'Tanh', 'Sigmoid','Hardswish', 'Mish', 'SiLU', 'Softplus', 'Softsign', 'Hardshrink','Softshrink', 'Tanhshrink', 'PReLU', 'RReLU', 'CELU', 'Hardtanh','DELU'],help='Activation function to use in the model')
     parser.add_argument('--a',type=float,default=1)
     parser.add_argument('--b',type=float,default=1)    
-    args = parser.parse_args()
+    parser.add_argument('--task',type=str)
     
+    args = parser.parse_args()
+ 
     main(args)

@@ -53,4 +53,75 @@ def update_results(file_path, new_result):
     df.to_csv(file_path, index=False)
     print(f"Updated results in {file_path}")
 
+def save_results(args, best_epoch, best_top1_accuracy, top5_accuracy, precision, recall, f1):
+    import os
 
+    os.makedirs('./saves', exist_ok=True)
+    file_path = f'./saves/{args.task}_results.txt'
+    initialize_csv(file_path)
+
+    activation_name = args.activation
+    if args.activation == 'DELU':
+        activation_name += f"_a{args.a}_b{args.b}"
+
+    new_result = {
+        'Model': args.model,
+        'Total Epochs': args.epochs,
+        'Activation Function': activation_name,
+        'Batch Size': args.batch_size,
+        'Seed': args.seed,
+        'Learning Rate': args.lr,
+        'Best Epoch': best_epoch,
+        'Top-1 Accuracy': best_top1_accuracy,
+        'Top-5 Accuracy': top5_accuracy,
+        'Precision': precision,
+        'Recall': recall,
+        'F1-score': f1
+    }
+
+    update_results(file_path, new_result)
+
+import os
+import csv
+
+def configuration_exists(args):
+    file_path = f'./saves/{args.task}_results.txt'
+    
+    # If the file doesn't exist, return False
+    if not os.path.exists(file_path):
+        return False
+    
+    # Construct the activation name
+    activation_name = args.activation
+    if args.activation == 'DELU':
+        activation_name += f"_a{args.a}_b{args.b}"
+    
+    # Define the key configuration elements
+    config_key = (
+        args.model,
+        args.task,  # Assuming the task is always MNIST
+        args.batch_size,
+        args.epochs,
+        args.lr,
+        activation_name,
+        args.seed
+    )
+    
+    # Read the CSV file and check for matching configurations
+    with open(file_path, 'r') as csvfile:
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            row_key = (
+                row['Model'],
+                args.task,  # Assuming the task is always MNIST
+                int(row['Batch Size']),
+                int(row['Total Epochs']),
+                float(row['Learning Rate']),
+                row['Activation Function'],
+                int(row['Seed'])
+            )
+            if row_key == config_key:
+                print(f"Configuration exists : ", row_key)
+                return True
+    
+    return False
