@@ -16,9 +16,10 @@ def filter_rows(df, args):
 def get_median_of_5(df):
     grouped = df.groupby(['Model', 'Total Epochs', 'Learning Rate', 'Batch Size'])
     result = []
-    for _, group in grouped:
+    for x, group in grouped:
         if len(group) != 5:
-            raise ValueError("Exactly 5 seeds are required for each unique combination when --mo5 is 'y'")
+
+            raise ValueError(f"Exactly 5 seeds are required for each unique combination when --mo5 is 'y', not the case for {x}, {group}")
         median_row = group.sort_values('Top-1 Accuracy', ascending=False).iloc[2]
         result.append(median_row)
     return pd.DataFrame(result)
