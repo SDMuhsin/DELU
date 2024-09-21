@@ -14,7 +14,7 @@ def filter_rows(df, args):
     return df[pd.concat(conditions, axis=1).all(axis=1)]
 
 def get_median_of_5(df):
-    grouped = df.groupby(['Model', 'Total Epochs', 'Learning Rate', 'Batch Size'])
+    grouped = df.groupby(['Model', 'Total Epochs', 'Learning Rate', 'Batch Size', 'Activation Function'])
     result = []
     for x, group in grouped:
         if len(group) != 5:
