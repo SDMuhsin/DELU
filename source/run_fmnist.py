@@ -88,8 +88,10 @@ def evaluate(model, test_loader, device):
     return top1_accuracy, top5_accuracy, precision, recall, f1
 
 def main(args):
+
     if(configuration_exists(args)):
         exit()
+    
     set_seed(args.seed)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -142,10 +144,9 @@ if __name__ == '__main__':
     parser.add_argument('--lr', type=float, default=0.001, help='learning rate')
     parser.add_argument('--seed', type=int, default=41, help='random seed')
     parser.add_argument('--activation', type=str, default='ReLU',choices=['ReLU', 'LeakyReLU', 'ELU', 'SELU', 'GELU', 'Tanh', 'Sigmoid','Hardswish', 'Mish', 'SiLU', 'Softplus', 'Softsign', 'Hardshrink','Softshrink', 'Tanhshrink', 'PReLU', 'RReLU', 'CELU', 'Hardtanh','DELU'],help='Activation function to use in the model')
-    parser.add_argument('--task',type=str)
-
-    args = parser.parse_args()
-    
+    parser.add_argument('--task',type=str)  
     parser.add_argument('--a',type=float,default=1)
     parser.add_argument('--b',type=float,default=1)
+    args = parser.parse_args()
+    
     main(args)

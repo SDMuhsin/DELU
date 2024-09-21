@@ -87,9 +87,10 @@ def evaluate(model, test_loader, device):
     return top1_accuracy, top5_accuracy, precision, recall, f1
 
 def main(args):
-   if(configuration_exists(args)):
-        exit() 
-    
+
+    if(configuration_exists(args)):
+        exit()
+
     set_seed(args.seed)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
