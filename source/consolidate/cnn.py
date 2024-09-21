@@ -13,6 +13,16 @@ def filter_rows(df, args):
     ]
     return df[pd.concat(conditions, axis=1).all(axis=1)]
 
+def get_median_of_5(df):
+    grouped = df.groupby(['Model', 'Total Epochs', 'Learning Rate', 'Batch Size'])
+    result = []
+    for _, group in grouped:
+        if len(group) != 5:
+            raise ValueError("Exactly 5 seeds are required for each unique combination when --mo5 is 'y'")
+        median_row = group.sort_values('Top-1 Accuracy', ascending=False).iloc[2]
+        result.append(median_row)
+    return pd.DataFrame(result)
+
 def main():
     parser = argparse.ArgumentParser(description='Filter and display MNIST results.')
     parser.add_argument('--task', type=str, help='mnist,fmnist,cifar10,cifar100,svhn')
@@ -22,6 +32,7 @@ def main():
     parser.add_argument('--lr', type=float, help='Learning rate')
     parser.add_argument('--seed', type=int, help='Seed')
     parser.add_argument('--activation', type=str, help='Activation function')
+    parser.add_argument('--mo5', type=str, default='n', help='Median of 5 best results (y/n)')
     args = parser.parse_args()
 
     # Read the CSV file using pandas
@@ -29,6 +40,15 @@ def main():
 
     # Apply filters
     filtered_df = filter_rows(df, args)
+
+    if args.mo5.lower() == 'y':
+        if args.seed is not None:
+            raise ValueError("Cannot specify a single seed when --mo5 is 'y'")
+        try:
+            filtered_df = get_median_of_5(filtered_df)
+        except ValueError as e:
+            print(f"Error: {str(e)}")
+            return
 
     if not filtered_df.empty:
         # Convert DataFrame to a list of lists for tabulate
