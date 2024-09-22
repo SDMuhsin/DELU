@@ -10,3 +10,13 @@ class DELU(nn.Module): # Dampened Exponential Linear Unit
     def forward(self, x):
         return x * torch.exp(-self.a * torch.exp(-self.b * x))
 
+
+class LDELU(nn.Module):  # Learned Dampened Exponential Linear Unit
+    def __init__(self, initial_a: float = 1.0, initial_b: float = 1.0):
+        super(LDELU, self).__init__()
+        self.a = nn.Parameter(torch.tensor(initial_a, dtype=torch.float))
+        self.b = nn.Parameter(torch.tensor(initial_b, dtype=torch.float))
+
+    def forward(self, x):
+        return x * torch.exp(-self.a * torch.exp(-self.b * x))
+
