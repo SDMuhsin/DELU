@@ -86,42 +86,35 @@ import csv
 
 def configuration_exists(args):
     file_path = f'./saves/{args.task}_results.txt'
-    
+
     # If the file doesn't exist, return False
     if not os.path.exists(file_path):
         return False
-    
+
     # Construct the activation name
     activation_name = args.activation
     if args.activation == 'DELU':
         activation_name += f"_a{args.a}_b{args.b}"
+
+    # Read the CSV file into a DataFrame
+    df = pd.read_csv(file_path)
+
+    # Define the configuration to check
+    config_to_check = pd.Series({
+        'Model': args.model,
+        'Batch Size': args.batch_size,
+        'Total Epochs': args.epochs,
+        'Learning Rate': args.lr,
+        'Activation Function': activation_name,
+        'Seed': args.seed
+    })
+
+    # Check if the configuration exists
+    matching_configs = (df[config_to_check.index] == config_to_check).all(axis=1)
     
-    # Define the key configuration elements
-    config_key = (
-        args.model,
-        args.task,  # Assuming the task is always MNIST
-        args.batch_size,
-        args.epochs,
-        args.lr,
-        activation_name,
-        args.seed
-    )
-    
-    # Read the CSV file and check for matching configurations
-    with open(file_path, 'r') as csvfile:
-        reader = csv.DictReader(csvfile)
-        for row in reader:
-            row_key = (
-                row['Model'],
-                args.task,  # Assuming the task is always MNIST
-                int(float((row['Batch Size']))),
-                int(float((row['Total Epochs']))),
-                float(row['Learning Rate']),
-                row['Activation Function'],
-                int(row['Seed'])
-            )
-            if row_key == config_key:
-                print(f"Configuration exists : ", row_key)
-                return True
-    
+    if matching_configs.any():
+        matching_row = df[matching_configs].iloc[0]
+        print(f"Configuration exists: {matching_row.to_dict()}")
+        return True
+
     return False

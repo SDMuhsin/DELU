@@ -99,6 +99,7 @@ def main(args):
     if(configuration_exists(args)):
         exit()
     set_seed(args.seed)
+    print(args)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     train_loader, test_loader = load_data(args.data_dir, args.batch_size)
