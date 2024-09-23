@@ -100,15 +100,26 @@ def evaluate(model, val_loader, device):
     return top1_accuracy, top5_accuracy, precision, recall, f1
 
 def main(args):
+
+
     if(configuration_exists(args)):
         exit()
+    
+    print(f"New config")
+    
     set_seed(args.seed)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
+    print(f"Device obtained")
+    
     train_loader, val_loader = load_data(args.data_dir, args.batch_size)
+    print(f"Data obtained")
+
     model = get_model(args.model).to(device)
+    print(f"Model obtained")
 
     activation = get_activation_by_name(args.activation,float(args.a),float(args.b))
+    
+    print(f"activation obtained")
 
     replace_activations(model, nn.ReLU, activation)
 
@@ -120,6 +131,9 @@ def main(args):
     best_epoch = 0
 
     for epoch in range(1, args.epochs + 1):
+
+        print(f"Epoch {epoch}, training")
+
         train(model, train_loader, optimizer, criterion, device, epoch, args.epochs)
         top1_accuracy, top5_accuracy, precision, recall, f1 = evaluate(model, val_loader, device)
 
@@ -141,6 +155,7 @@ def main(args):
     save_results(args, best_epoch, best_top1_accuracy, top5_accuracy, precision, recall, f1)
 
 if __name__ == '__main__':
+    print(f"Main started")
     parser = argparse.ArgumentParser(description='Tiny ImageNet CNN Training')
     parser.add_argument('--model', type=str, default='resnet18', choices=['resnet18', 'vgg16', 'densenet121'],
                         help='model architecture')
@@ -156,4 +171,6 @@ if __name__ == '__main__':
 
     
     args = parser.parse_args()
+    print(f" Args, parsed ",args)
+
     main(args)
