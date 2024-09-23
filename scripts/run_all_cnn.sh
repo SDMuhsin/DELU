@@ -1,10 +1,10 @@
 #!/bin/bash
 
 # List of tasks
-tasks=(fmnist cifar10 cifar100 svhn stl10 tinyimagenet cinic10)
+tasks=(cinic10 tinyimagenet)  #(mnist fmnist cifar10 cifar100 svhn stl10 tinyimagenet cinic10)
 
 # List of (a,b) pairs
-a_b_pairs=("0.5 1.2" "0.7 1.1")
+a_b_pairs=("1 1" "0.5 1.2" "0.7 1.1")
 
 # Loop through each task
 for task in "${tasks[@]}"; do

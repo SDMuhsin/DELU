@@ -49,7 +49,7 @@ from transformers import (
 )
 from transformers.utils import check_min_version, send_example_telemetry
 from transformers.utils.versions import require_version
-
+from transformers.activations import GELUActivation
 from models.model_factory import create_model
 from common.utility import replace_activations
 from common.utility import get_activation_by_name
@@ -231,6 +231,9 @@ def parse_args():
         choices=['n','y']
     )
     parser.add_argument('--activation', type=str, default='ReLU',choices=['ReLU', 'LeakyReLU', 'ELU', 'SELU', 'GELU', 'Tanh', 'Sigmoid','Hardswish', 'Mish', 'SiLU', 'Softplus', 'Softsign', 'Hardshrink','Softshrink', 'Tanhshrink', 'PReLU', 'RReLU', 'CELU', 'Hardtanh','DELU'],help='Activation function to use in the model')
+    parser.add_argument('--a',type=float,default=1)
+    parser.add_argument('--b',type=float,default=1)
+
     args = parser.parse_args()
 
     # Sanity checks
@@ -411,10 +414,10 @@ def main():
     '''
         Replace model ReLU with new activation
     '''
-    activation = get_activation_by_name(args.activation)
+    activation = get_activation_by_name(args.activation,float(args.a),float(args.b))
     print(f"Replacing ReLU with",args.activation)
-    replace_activations(model, nn.ReLU, activation)
-    replace_activations(model,nn.GELU,activation)
+    replace_activations(model, GELUActivation, activation)
+
     # Preprocessing the datasets
     if args.task_name is not None:
         sentence1_key, sentence2_key = task_to_keys[args.task_name]
@@ -716,7 +719,7 @@ def main():
             {},
             open(eval_save_file_name,'w')
         ) 
-    
+    # TODO : Is it using the right value? 
     save_data = json.load(open(eval_save_file_name,'r'))
     save_data[str(args.seed)] = eval_result if args.store_best_result == 'n' else best_eval_result
     
