@@ -230,9 +230,9 @@ def parse_args():
         default='n',
         choices=['n','y']
     )
-    parser.add_argument('--activation', type=str, default='ReLU',choices=['ReLU', 'LeakyReLU', 'ELU', 'SELU', 'GELU', 'Tanh', 'Sigmoid','Hardswish', 'Mish', 'SiLU', 'Softplus', 'Softsign', 'Hardshrink','Softshrink', 'Tanhshrink', 'PReLU', 'RReLU', 'CELU', 'Hardtanh','DELU'],help='Activation function to use in the model')
-    parser.add_argument('--a',type=float,default=1)
-    parser.add_argument('--b',type=float,default=1)
+    parser.add_argument('--activation', type=str, default='ReLU',choices=['NONE','ReLU', 'LeakyReLU', 'ELU', 'SELU', 'GELU', 'Tanh', 'Sigmoid','Hardswish', 'Mish', 'SiLU', 'Softplus', 'Softsign', 'Hardshrink','Softshrink', 'Tanhshrink', 'PReLU', 'RReLU', 'CELU', 'Hardtanh','DELU'],help='Activation function to use in the model')
+    parser.add_argument('--a',type=float,default=1.0)
+    parser.add_argument('--b',type=float,default=1.0)
 
     args = parser.parse_args()
 
@@ -270,7 +270,10 @@ def main():
 
     args = parse_args()
 
-    args.job_id += args.activation
+    args.job_id += f"{args.activation}"
+    if(args.activation == 'DELU'):
+        args.job_id += f"_a{args.a}_b{args.b}"
+
     folder_path = f"./saves/{args.job_id}_SPLIT" if args.split_train == 'y' else f"./saves/{args.job_id}"
     pathlib.Path(folder_path).mkdir(exist_ok=True)
     eval_save_file_name = f'{folder_path}/results_rg_{args.task_name}_{args.model_name_or_path.split("/")[-1]}.json'
@@ -383,6 +386,7 @@ def main():
             finetuning_task=args.task_name,
             trust_remote_code=args.trust_remote_code,
         )
+        
         config.save_pretrained(config_path)
     else:
         config = AutoConfig.from_pretrained(config_path)
@@ -392,6 +396,7 @@ def main():
         tokenizer = AutoTokenizer.from_pretrained(
             args.model_name_or_path, use_fast=not args.use_slow_tokenizer, trust_remote_code=args.trust_remote_code
         )
+        #tokenizer = AutoTokenizer.from_config(config)
         tokenizer.save_pretrained(tokenizer_path)
     else:
         tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
@@ -402,11 +407,12 @@ def main():
     config.pad_token_id = tokenizer.pad_token_id
 
     if not os.path.exists(model_path):
-        model = AutoModelForSequenceClassification.from_pretrained(
-            args.model_name_or_path,
-            config=config,
-            trust_remote_code=None
-        )
+        #model = AutoModelForSequenceClassification.from_pretrained(
+        #    args.model_name_or_path,
+        #    config=config,
+        #    trust_remote_code=None
+        #)
+        model = AutoModelForSequenceClassification.from_config(config) 
         model.save_pretrained(model_path)
     else:
         model = AutoModelForSequenceClassification.from_pretrained(model_path)
@@ -414,9 +420,10 @@ def main():
     '''
         Replace model ReLU with new activation
     '''
-    activation = get_activation_by_name(args.activation,float(args.a),float(args.b))
-    print(f"Replacing ReLU with",args.activation)
-    replace_activations(model, GELUActivation, activation)
+    if (args.activation != 'NONE'):
+        activation = get_activation_by_name(args.activation,float(args.a),float(args.b))
+        print(f"Replacing ReLU with",args.activation)
+        replace_activations(model, GELUActivation, activation)
 
     # Preprocessing the datasets
     if args.task_name is not None:

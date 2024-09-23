@@ -85,7 +85,7 @@ def evaluate(model, test_loader, device):
     f1 = f1_score(all_targets, all_preds, average='weighted')
 
     return top1_accuracy, top5_accuracy, precision, recall, f1
-
+import time
 def main(args):
 
     if(configuration_exists(args)):
@@ -97,9 +97,26 @@ def main(args):
     train_loader, test_loader = load_data(args.data_dir, args.batch_size)
     model = get_model(args.model).to(device)
 
-    activation = get_activation_by_name(args.activation)
-
+    activation = get_activation_by_name(args.activation,float(args.a),float(args.b))
+    
     replace_activations(model, nn.ReLU, activation)
+    # After replacing activations
+    activation_class = type(activation)  # Get the class of the activation object
+
+    for name, module in model.named_modules():
+        if isinstance(module, activation_class):
+            print(f"Found {activation_class.__name__} in {name}")
+            # Print the parameters
+            for param_name, param in module.named_parameters():
+                print(f"  {param_name}: {param.data}")
+            
+            # If you specifically want to print 'a' and 'b' parameters:
+            if hasattr(module, 'a'):
+                print(f"  a: {module.a}")
+            if hasattr(module, 'b'):
+                print(f"  b: {module.b}")
+            
+            print()  # Add a blank line for better readability
 
     optimizer = optim.Adam(model.parameters(), lr=args.lr)
     criterion = nn.CrossEntropyLoss()

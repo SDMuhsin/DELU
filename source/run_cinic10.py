@@ -141,7 +141,7 @@ def main(args):
     model = get_model(args.model).to(device)
     print(f"Model loaded and transferred to GPU ")
 
-    activation = get_activation_by_name(args.activation)
+    activation = get_activation_by_name(args.activation,float(args.a),float(args.b))
     print(f"Got activation")
     replace_activations(model, nn.ReLU, activation)
     print(f"Replaced activations")

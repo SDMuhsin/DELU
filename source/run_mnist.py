@@ -187,7 +187,7 @@ def main(args):
 
     train_loader, test_loader = load_data(args.data_dir, args.batch_size)
     model = get_model(args.model).to(device)
-    activation = get_activation_by_name(args.activation)
+    activation = get_activation_by_name(args.activation,float(args.a),float(args.b))
     replace_activations(model, nn.ReLU, activation)
 
     optimizer = optim.Adam(model.parameters(), lr=args.lr)
