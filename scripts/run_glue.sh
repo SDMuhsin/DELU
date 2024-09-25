@@ -26,7 +26,7 @@ for MODEL in "${MODELS[@]}"; do
 
 
 		export MODEL TASK activation
-		 parallel -j 1 -u 'conda activate double_env_6;echo "Running for model: $MODEL, task: $TASK, with seed: {}"; \
+		 parallel -j 5 -u 'conda activate double_env_6;echo "Running for model: $MODEL, task: $TASK, with seed: {}"; \
 		    python3 ./source/run_glue.py \
 		    --output_dir $OUTPUT_DIR \
 		    --model_name_or_path $MODEL \
