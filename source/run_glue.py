@@ -230,7 +230,7 @@ def parse_args():
         default='n',
         choices=['n','y']
     )
-    parser.add_argument('--activation', type=str, default='ReLU',choices=['NONE','ReLU', 'LeakyReLU', 'ELU', 'SELU', 'GELU', 'Tanh', 'Sigmoid','Hardswish', 'Mish', 'SiLU', 'Softplus', 'Softsign', 'Hardshrink','Softshrink', 'Tanhshrink', 'PReLU', 'RReLU', 'CELU', 'Hardtanh','DELU'],help='Activation function to use in the model')
+    parser.add_argument('--activation', type=str, default='ReLU',choices=['NONE','ADELU','ReLU', 'LeakyReLU', 'ELU', 'SELU', 'GELU', 'Tanh', 'Sigmoid','Hardswish', 'Mish', 'SiLU', 'Softplus', 'Softsign', 'Hardshrink','Softshrink', 'Tanhshrink', 'PReLU', 'RReLU', 'CELU', 'Hardtanh','DELU'],help='Activation function to use in the model')
     parser.add_argument('--a',type=float,default=1.0)
     parser.add_argument('--b',type=float,default=1.0)
 

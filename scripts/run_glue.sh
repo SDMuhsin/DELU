@@ -37,7 +37,7 @@ for MODEL in "${MODELS[@]}"; do
 		    --job_id glue \
 		    --split_train n \
 		    --just_download n \
-		    --overwrite_saves y \
+		    --overwrite_saves n \
 		    --activation $activation \
 		    --store_best_result y \
 		    --a $a \
