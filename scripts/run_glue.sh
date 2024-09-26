@@ -22,7 +22,7 @@ export NUM_EPOCHS
 export LEARNING_RATE
 # Run the script for each model, task, and seed
 for MODEL in "${MODELS[@]}"; do
-    for TASK in rte cola; do
+    for TASK in rte cola stsb mrpc sst2 qnli qqp mnli; do
 
 
 		export MODEL TASK activation
