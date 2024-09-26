@@ -2,7 +2,7 @@ from tabulate import tabulate
 import json 
 
 # Loop through datasets
-tasks = ["cola","rte","mrpc","stsb"]
+tasks = ["cola","rte","mrpc","stsb","sst2","qnli","qqp","mnli"]
 seeds = [41,42,43,44,45]
 models = ["distilbert-base-cased","albert-base-v1"] #"albert/albert-base-v1","squeezebert/squeezebert-uncased","openai-community/gpt2","xlnet/xlnet-base-cased","google-t5/t5-base"
 
