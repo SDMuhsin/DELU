@@ -17,7 +17,9 @@ task_to_metrics = {
     "stsb" : "pearson",
     "sst2" : "accuracy",
     "cola" : "matthews_correlation",
-    "qnli" : "accuracy"
+    "qnli" : "accuracy",
+    "qqp" : "accuracy",
+    "mnli" : "accuracy"
 }
 
 global_results = {}
