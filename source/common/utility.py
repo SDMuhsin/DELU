@@ -1,5 +1,5 @@
 import torch.nn as nn
-from common.DELU import DELU,ADELU,TDELU,ATDELU
+from common.DELU import DELU,ADELU,TDELU,ATDELU,FADELU
 
 def get_activation_by_name(activation_name,a=1,b=1):
     activation_map = {
@@ -25,7 +25,8 @@ def get_activation_by_name(activation_name,a=1,b=1):
         'DELU' : DELU(a,b),
         'ADELU' : ADELU(),
         'TDELU' : TDELU(),
-        'ATDELU' : ATDELU()
+        'ATDELU' : ATDELU(),
+        'FADELU' : FADELU()
     }
     
     if activation_name in activation_map:
