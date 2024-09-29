@@ -98,7 +98,7 @@ def main(args):
     train_loader, test_loader = load_data(args.data_dir, args.batch_size)
     model = get_model(args.model).to(device)
 
-    activation = get_activation_by_name(args.activation,float(args.a),float(args.b))
+    activation = get_activation_by_name(args.activation,float(args.a),float(args.b),args.c,args.d)
     
     replace_activations(model, nn.ReLU, activation)
     # After replacing activations
@@ -151,6 +151,8 @@ if __name__ == '__main__':
     parser.add_argument('--activation', type=str, default='ReLU',choices=['FADELU','TDELU','ATDELU','ADELU','ReLU', 'LeakyReLU', 'ELU', 'SELU', 'GELU', 'Tanh', 'Sigmoid','Hardswish', 'Mish', 'SiLU', 'Softplus', 'Softsign', 'Hardshrink','Softshrink', 'Tanhshrink', 'PReLU', 'RReLU', 'CELU', 'Hardtanh','DELU'],help='Activation function to use in the model')
     parser.add_argument('--a',type=float,default=1)
     parser.add_argument('--b',type=float,default=1)
+    parser.add_argument('--c',type=float,default=1)
+    parser.add_argument('--d',type=float,default=1)
     parser.add_argument('--task',type=str)
         
     args = parser.parse_args()
