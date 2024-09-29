@@ -230,9 +230,11 @@ def parse_args():
         default='n',
         choices=['n','y']
     )
-    parser.add_argument('--activation', type=str, default='ReLU',choices=['NONE','ADELU','ReLU', 'LeakyReLU', 'ELU', 'SELU', 'GELU', 'Tanh', 'Sigmoid','Hardswish', 'Mish', 'SiLU', 'Softplus', 'Softsign', 'Hardshrink','Softshrink', 'Tanhshrink', 'PReLU', 'RReLU', 'CELU', 'Hardtanh','DELU'],help='Activation function to use in the model')
+    parser.add_argument('--activation', type=str, default='ReLU',choices=['FADELU','NONE','ADELU','ReLU', 'LeakyReLU', 'ELU', 'SELU', 'GELU', 'Tanh', 'Sigmoid','Hardswish', 'Mish', 'SiLU', 'Softplus', 'Softsign', 'Hardshrink','Softshrink', 'Tanhshrink', 'PReLU', 'RReLU', 'CELU', 'Hardtanh','DELU'],help='Activation function to use in the model')
     parser.add_argument('--a',type=float,default=1.0)
     parser.add_argument('--b',type=float,default=1.0)
+    parser.add_argument('--c',type=float,default=1.0)
+    parser.add_argument('--d',type=float,default=1.0)
 
     args = parser.parse_args()
 
@@ -273,6 +275,8 @@ def main():
     args.job_id += f"{args.activation}"
     if(args.activation == 'DELU'):
         args.job_id += f"_a{args.a}_b{args.b}"
+    elif(args.job_id == 'FADELU'):
+        args.job_id += f"_a{args.a}_b{args.b}_c{args.c}_d{args.d}"
 
     folder_path = f"./saves/{args.job_id}_SPLIT" if args.split_train == 'y' else f"./saves/{args.job_id}"
     pathlib.Path(folder_path).mkdir(exist_ok=True)
@@ -421,7 +425,7 @@ def main():
         Replace model ReLU with new activation
     '''
     if (args.activation != 'NONE'):
-        activation = get_activation_by_name(args.activation,float(args.a),float(args.b))
+        activation = get_activation_by_name(args.activation,float(args.a),float(args.b),float(args.c),float(args.d))
         print(f"Replacing ReLU with",args.activation)
         replace_activations(model, GELUActivation, activation)
 

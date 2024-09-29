@@ -12,9 +12,14 @@ LEARNING_RATE=2e-5
 activation=$1
 a=${2:-1}  # Use first argument if provided, otherwise default to 1
 b=${3:-1}  # Use second argument if provided, otherwise default to 1
+c=${4:-1}  # Use second argument if provided, otherwise default to 1
+d=${5:-1}  # Use second argument if provided, otherwise default to 1
 
 export a
 export b
+export c
+export d
+
 export OUTPUT_DIR
 export MAX_SEQ_LENGTH
 export TRAIN_BATCH_SIZE
@@ -42,6 +47,8 @@ for MODEL in "${MODELS[@]}"; do
 		    --store_best_result y \
 		    --a $a \
 		    --b $b \
+		    --c $c \
+		    --d $d \
 		    --task_name $TASK' ::: 41 42 43 44 45
     done
 done
