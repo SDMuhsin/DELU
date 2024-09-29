@@ -1,7 +1,7 @@
 import torch.nn as nn
 from common.DELU import DELU,ADELU,TDELU,ATDELU,FADELU
 
-def get_activation_by_name(activation_name,a=1,b=1):
+def get_activation_by_name(activation_name,a=1.0,b=1.0,c=1.0,d=1.0):
     activation_map = {
         'ReLU': nn.ReLU(),
         'LeakyReLU': nn.LeakyReLU(),
@@ -26,9 +26,9 @@ def get_activation_by_name(activation_name,a=1,b=1):
         'ADELU' : ADELU(),
         'TDELU' : TDELU(),
         'ATDELU' : ATDELU(),
-        'FADELU' : FADELU()
+        'FADELU' : FADELU(a,b,c,d)
     }
-    
+    print(f"a = {a}, d = {d}") 
     if activation_name in activation_map:
         return activation_map[activation_name]
     else:

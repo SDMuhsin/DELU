@@ -95,6 +95,8 @@ def configuration_exists(args):
     activation_name = args.activation
     if args.activation == 'DELU':
         activation_name += f"_a{args.a}_b{args.b}"
+    elif args.activation == 'FADELU':
+        activation_name += f"_a{args.a}_b{args.b}_c{args.c}_d{args.d}"
 
     # Read the CSV file into a DataFrame
     df = pd.read_csv(file_path)
