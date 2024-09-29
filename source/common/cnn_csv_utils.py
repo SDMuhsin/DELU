@@ -63,6 +63,8 @@ def save_results(args, best_epoch, best_top1_accuracy, top5_accuracy, precision,
     activation_name = args.activation
     if args.activation == 'DELU':
         activation_name += f"_a{args.a}_b{args.b}"
+    elif args.activation == 'FADELU':
+        activation_name += f"_a{args.a}_b{args.b}_c{args.c}_d{args.d}"
 
     new_result = {
         'Model': args.model,
