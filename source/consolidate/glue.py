@@ -24,7 +24,7 @@ task_to_metrics = {
 
 global_results = {}
 
-job_ids = ['glueNONE','glueADELU','glueDELU_a0.5_b1.2','glueDELU_a0.7_b1.1','glueDELU_a1.0_b1.0'] # ensemble3x_v12
+job_ids = ['glueNONE','glueFADELU_a0.5218_b1.2655_c0.0065_d0.8595'] # ensemble3x_v12
 
 for task in tasks:
     global_results[task] = {}
