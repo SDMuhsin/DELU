@@ -275,7 +275,7 @@ def main():
     args.job_id += f"{args.activation}"
     if(args.activation == 'DELU'):
         args.job_id += f"_a{args.a}_b{args.b}"
-    elif(args.job_id == 'FADELU'):
+    elif(args.activation == 'FADELU'):
         args.job_id += f"_a{args.a}_b{args.b}_c{args.c}_d{args.d}"
 
     folder_path = f"./saves/{args.job_id}_SPLIT" if args.split_train == 'y' else f"./saves/{args.job_id}"
