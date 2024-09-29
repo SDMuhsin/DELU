@@ -48,6 +48,8 @@ class ATDELU(nn.Module):  # Adaptive Tanh Dampened Exponential Linear Unit
 
     def forward(self, x):
         return 0.5 * self.a * x * (1 + torch.tanh(self.b * x))
+
+
 class FADELU(nn.Module):
     def __init__(self, init_a=1.0, init_b=1.0, init_c=0.1, init_d=1.0):
         super(FADELU, self).__init__()

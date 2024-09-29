@@ -36,3 +36,4 @@ optimal_a2, optimal_b2 = result2.x
 
 print(f"Optimal (a, b) for GELU vs DELU: ({optimal_a1}, {optimal_b1})")
 print(f"Optimal (a, b) for GELU' vs DELU': ({optimal_a2}, {optimal_b2})")
+

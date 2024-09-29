@@ -55,6 +55,7 @@ def get_model(model_name):
 def train(model, train_loader, optimizer, criterion, device):
     model.train()
     for batch_idx, (data, target) in enumerate(train_loader):
+        print(f"Batch {batch_idx} ",end="\r")
         data, target = data.to(device), target.to(device)
         optimizer.zero_grad()
         output = model(data)
@@ -102,16 +103,20 @@ def main(args):
     replace_activations(model, nn.ReLU, activation)
     # After replacing activations
     activation_class = type(activation)  # Get the class of the activation object
-
+    print("Replaced activations")
 
     optimizer = optim.Adam(model.parameters(), lr=args.lr)
     criterion = nn.CrossEntropyLoss()
+    
+    print("Built optimizer")
 
     best_top1_accuracy = 0
     best_results = None
     best_epoch = 0
-
+    
+    print("Starting training")
     for epoch in range(1, args.epochs + 1):
+        print(f"Epoch {epoch}")
         train(model, train_loader, optimizer, criterion, device)
         top1_accuracy, top5_accuracy, precision, recall, f1 = evaluate(model, test_loader, device)
 
