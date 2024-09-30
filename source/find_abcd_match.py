@@ -75,19 +75,43 @@ def optimize_fadelu(target_activation):
     return fadelu
 
 def plot_results(fadelu, target_activation):
-    x = torch.linspace(-10,10, 1000)
+    x = torch.linspace(-10, 10, 1000)
     y_fadelu = fadelu(x)
     y_target = get_activation_by_name(target_activation)(x)
     
-    plt.figure(figsize=(10, 6))
-    plt.plot(x.numpy(), y_fadelu.detach().numpy(), label='FADELU')
-    plt.plot(x.numpy(), y_target.detach().numpy(), label=target_activation)
-    plt.legend()
-    plt.title(f'FADELU vs {target_activation}')
-    plt.xlabel('x')
-    plt.ylabel('y')
+    # Calculate the Squared Error
+    squared_error = (y_fadelu - y_target) ** 2
+
+    # Calculate the Mean Squared Error
+    mse = squared_error.mean().item()
+
+    # Get DELU parameters
+    a, b, c, d = fadelu.a.item(), fadelu.b.item(), fadelu.c.item(), fadelu.d.item()
+
+    fig, ax1 = plt.subplots(figsize=(10, 6))
+
+    # Plot DELU and target activation
+    ax1.plot(x.numpy(), y_fadelu.detach().numpy(), label='DELU')
+    ax1.plot(x.numpy(), y_target.detach().numpy(), label=target_activation)
+    ax1.set_xlabel('x')
+    ax1.set_ylabel('Activation')
+    ax1.tick_params(axis='y')
+
+    # Create a secondary y-axis for Squared Error
+    ax2 = ax1.twinx()
+    ax2.plot(x.numpy(), squared_error.detach().numpy(), label='Squared Error', color='r', linestyle='--')
+    ax2.set_ylabel('Squared Error')
+    ax2.set_ylim(0, 0.15)
+    ax2.tick_params(axis='y')
+
+    # Combine legends
+    lines1, labels1 = ax1.get_legend_handles_labels()
+    lines2, labels2 = ax2.get_legend_handles_labels()
+    ax1.legend(lines1 + lines2, labels1 + labels2, loc='upper left')
+
+    plt.title(f'$DELU_{{{a:.2f},{b:.2f},{c:.2f},{d:.2f}}}$ vs {target_activation}\nMSE: {mse:.4f}')
     plt.grid(True)
-    plt.savefig(f'fadelu_vs_{target_activation}.png')
+    plt.savefig(f'delu_vs_{target_activation}.png')
     plt.close()
 
 def main():
