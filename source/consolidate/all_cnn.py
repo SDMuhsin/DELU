@@ -3,7 +3,7 @@ import pandas as pd
 from tabulate import tabulate
 import numpy as np
 
-# Updated configuration dictionary
+# Configuration dictionary
 config = {
     'mnist': {'epochs': 10, 'batch_size': 64, 'learning_rate': 0.001},
     'fmnist': {'epochs': 10, 'batch_size': 64, 'learning_rate': 0.001},
@@ -15,7 +15,6 @@ config = {
     'kmnist': {'epochs': 10, 'batch_size': 64, 'learning_rate': 0.001}
 }
 
-# Function to process a single dataset
 def process_dataset(file_path, dataset_name):
     df = pd.read_csv(file_path)
     
@@ -26,7 +25,10 @@ def process_dataset(file_path, dataset_name):
         (df['Learning Rate'] == config[dataset_name]['learning_rate'])
     ]
     
-    # Check for missing seeds and fill with dash if missing
+    if df_filtered.empty:
+        print(f"Warning: No data for dataset {dataset_name} with the specified configuration.")
+        return pd.DataFrame(columns=['Activation Function', 'Top-1 Accuracy', 'Dataset'])
+
     seeds = [41, 42, 43, 44, 45]
     result = []
     for activation in df_filtered['Activation Function'].unique():
@@ -43,6 +45,10 @@ def process_dataset(file_path, dataset_name):
                 }, ignore_index=True)
         result.append(df_act)
     
+    if not result:
+        print(f"Warning: No valid data for dataset {dataset_name} after filtering.")
+        return pd.DataFrame(columns=['Activation Function', 'Top-1 Accuracy', 'Dataset'])
+
     df_filtered = pd.concat(result, ignore_index=True)
     
     # Group by Activation Function and calculate median
@@ -58,13 +64,22 @@ for file in os.listdir('saves'):
         if dataset_name in config:
             file_path = os.path.join('saves', file)
             result = process_dataset(file_path, dataset_name)
-            all_results.append(result)
+            if not result.empty:
+                all_results.append(result)
+
+if not all_results:
+    print("Error: No valid data found for any dataset.")
+    exit(1)
 
 # Combine all results
 combined_results = pd.concat(all_results, ignore_index=True)
 
 # Find common activation functions
 activation_functions = set.intersection(*[set(df['Activation Function']) for df in all_results])
+
+if not activation_functions:
+    print("Error: No common activation functions found across datasets.")
+    exit(1)
 
 # Filter for common activation functions
 combined_results = combined_results[combined_results['Activation Function'].isin(activation_functions)]
