@@ -7,12 +7,12 @@ import numpy as np
 config = {
     'mnist': {'epochs': 10, 'batch_size': 64, 'learning_rate': 0.001},
     'fmnist': {'epochs': 10, 'batch_size': 64, 'learning_rate': 0.001},
-    'cifar10': {'epochs': 50, 'batch_size': 128, 'learning_rate': 0.01},
-    'cifar100': {'epochs': 100, 'batch_size': 128, 'learning_rate': 0.01},
+    'cifar10': {'epochs': 10, 'batch_size': 128, 'learning_rate': 0.01},
+    'cifar100': {'epochs': 50, 'batch_size': 128, 'learning_rate': 0.01},
     'svhn': {'epochs': 50, 'batch_size': 128, 'learning_rate': 0.01},
-    'stl10': {'epochs': 100, 'batch_size': 64, 'learning_rate': 0.001},
-    'emnist': {'epochs': 20, 'batch_size': 64, 'learning_rate': 0.001},
-    'kmnist': {'epochs': 20, 'batch_size': 64, 'learning_rate': 0.001}
+    'stl10': {'epochs': 50, 'batch_size': 64, 'learning_rate': 0.001},
+    'emnist': {'epochs':30, 'batch_size': 64, 'learning_rate': 0.001},
+    'kmnist': {'epochs': 10, 'batch_size': 64, 'learning_rate': 0.001}
 }
 
 # Function to process a single dataset
