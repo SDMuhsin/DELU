@@ -28,7 +28,7 @@ export NUM_EPOCHS
 export LEARNING_RATE
 
 # Run the script for the specified model, each task, and seed
-for TASK in rte cola stsb mrpc sst2 qnli qqp mnli; do
+for TASK in rte cola stsb mrpc sst2 qnli; do
     export MODEL TASK activation
     parallel -j 1 -u 'conda activate double_env_6;echo "Running for model: $MODEL, task: $TASK, with seed: {}"; \
         python3 ./source/run_glue.py \
@@ -40,8 +40,8 @@ for TASK in rte cola stsb mrpc sst2 qnli qqp mnli; do
         --learning_rate $LEARNING_RATE \
         --job_id glue \
         --split_train n \
-        --just_download y \
-        --overwrite_saves y \
+        --just_download n \
+        --overwrite_saves n \
         --activation $activation \
         --store_best_result y \
         --a $a \
