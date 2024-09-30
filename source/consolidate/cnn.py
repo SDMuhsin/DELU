@@ -18,9 +18,11 @@ def get_median_of_5(df):
     result = []
     for x, group in grouped:
         if len(group) != 5:
-
-            raise ValueError(f"Exactly 5 seeds are required for each unique combination when --mo5 is 'y', not the case for {x}, {group}")
-        median_row = group.sort_values('Top-1 Accuracy', ascending=False).iloc[2]
+            print(f"Warning: Exactly 5 seeds are required for each unique combination when --mo5 is 'y', not the case for {x}")
+            median_row = group.sort_values('Top-1 Accuracy', ascending=False).iloc[len(group) // 2]
+            median_row = median_row.fillna('-')
+        else:
+            median_row = group.sort_values('Top-1 Accuracy', ascending=False).iloc[2]
         result.append(median_row)
     return pd.DataFrame(result)
 
@@ -45,11 +47,7 @@ def main():
     if args.mo5.lower() == 'y':
         if args.seed is not None:
             raise ValueError("Cannot specify a single seed when --mo5 is 'y'")
-        try:
-            filtered_df = get_median_of_5(filtered_df)
-        except ValueError as e:
-            print(f"Error: {str(e)}")
-            return
+        filtered_df = get_median_of_5(filtered_df)
 
     if not filtered_df.empty:
         # Convert DataFrame to a list of lists for tabulate
