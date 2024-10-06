@@ -74,7 +74,8 @@ def get_model(model_name, dataset):
         model.fc = nn.Linear(num_ftrs, output_dim)
     elif model_name == 'shufflenet':
         model = models.shufflenet_v2_x0_5(pretrained=False)
-        model.conv1[0] = nn.Conv2d(input_channels, 24, kernel_size=3, stride=2, padding=1, bias=False)
+        if(dataset in ['kmnist','emnist']):
+            model.conv1[0] = nn.Conv2d(input_channels, 24, kernel_size=3, stride=2, padding=1, bias=False)
         num_ftrs = model.fc.in_features
         model.fc = nn.Linear(num_ftrs, output_dim)
     elif model_name == 'vgg16':
