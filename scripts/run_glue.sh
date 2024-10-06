@@ -2,7 +2,7 @@
 
 # Define constants
 OUTPUT_DIR="saves/tmp"
-MODELS=("bert-base-uncased" "distilbert/distilbert-base-cased" "albert/albert-base-v1") #"albert/albert-base-v1") #("albert/albert-base-v1" "squeezebert/squeezebert-uncased" "facebook/bart-base" "bert-base-uncased" "google-t5/t5-base")  # Add your model names here
+MODELS=("distilbert/distilbert-base-cased") #"albert/albert-base-v1") #("albert/albert-base-v1" "squeezebert/squeezebert-uncased" "facebook/bart-base" "bert-base-uncased" "google-t5/t5-base")  # Add your model names here
 MAX_SEQ_LENGTH=128
 TRAIN_BATCH_SIZE=32
 NUM_EPOCHS=9
@@ -27,7 +27,7 @@ export NUM_EPOCHS
 export LEARNING_RATE
 # Run the script for each model, task, and seed
 for MODEL in "${MODELS[@]}"; do
-    for TASK in rte cola stsb mrpc sst2 qnli qqp mnli; do
+    for TASK in mrpc rte cola stsb; do
 
 
 		export MODEL TASK activation
@@ -41,10 +41,11 @@ for MODEL in "${MODELS[@]}"; do
 		    --learning_rate $LEARNING_RATE \
 		    --job_id glue \
 		    --split_train n \
-		    --just_download y \
+		    --just_download n \
 		    --overwrite_saves y \
 		    --activation $activation \
 		    --store_best_result y \
+		    --sparse y \
 		    --a $a \
 		    --b $b \
 		    --c $c \

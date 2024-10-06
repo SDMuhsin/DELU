@@ -235,7 +235,7 @@ def parse_args():
     parser.add_argument('--b',type=float,default=1.0)
     parser.add_argument('--c',type=float,default=1.0)
     parser.add_argument('--d',type=float,default=1.0)
-
+    parser.add_argument('--sparse',type=str,default='n')
     args = parser.parse_args()
 
     # Sanity checks
@@ -267,16 +267,76 @@ def compute_with_retry(metric, max_retries=10, initial_wait=1):
                 raise  # Re-raise if it's a different ValueError
     
     raise Exception(f"Failed to compute metric after {max_retries} attempts")
+def measure_activation_sparsity(model, eval_dataloader, accelerator):
+    model.eval()
+    total_activations = 0
+    total_nonzero = 0
+    
+    for batch in eval_dataloader:
+        with torch.no_grad():
+            outputs = model(**batch, output_hidden_states=True)
+        
+        # Measure sparsity in hidden states
+        for hidden_state in outputs.hidden_states:
+            total_activations += hidden_state.numel()
+            total_nonzero += torch.count_nonzero(hidden_state)
+    
+    sparsity = 1 - (total_nonzero / total_activations)
+    return sparsity.item()
 
+SP_T = 1e-4
+
+
+def measure_weight_sparsity(model, accelerator, threshold=SP_T):
+    model.eval()
+    total_weights = 0
+    total_sparse = 0
+
+    for name, param in model.named_parameters():
+        if 'weight' in name:  # Only consider weight parameters
+            total_weights += param.numel()
+            total_sparse += (param.abs() < threshold).sum().item()
+
+    sparsity = total_sparse / total_weights
+    return sparsity
+
+
+def compute_sparsity_loss(model, threshold=SP_T):
+    sparsity_loss = 0
+    for name, param in model.named_parameters():
+        if 'weight' in name:
+            # L1 regularization
+            sparsity_loss += torch.sum( torch.abs(param) ) 
+            
+            # Apply soft thresholding
+            #with torch.no_grad():
+            #    param.data = torch.sign(param.data) * torch.relu(torch.abs(param.data) - threshold)
+    
+    return sparsity_loss
+
+
+def print_sparsity_info(model):
+    for name, param in model.named_parameters():
+        if 'weight' in name:
+            sparsity = (param.abs() < 1e-3).float().mean().item()
+            print(f"Layer {name}: Sparsity = {sparsity:.4f}")
 def main():
 
     args = parse_args()
+    
+    ''' lr override for cola and stsb because they seem to become unstable at low lr'''
+    if(args.task_name in ["cola","stsb"]):
+        args.learning_rate = 2e-2
+        print(f"Learning rate overriden")
 
     args.job_id += f"{args.activation}"
     if(args.activation == 'DELU'):
         args.job_id += f"_a{args.a}_b{args.b}"
     elif(args.activation == 'FADELU'):
         args.job_id += f"_a{args.a}_b{args.b}_c{args.c}_d{args.d}"
+    
+    if(args.sparse == 'y'):
+        args.job_id += f"_sparse"
 
     folder_path = f"./saves/{args.job_id}_SPLIT" if args.split_train == 'y' else f"./saves/{args.job_id}"
     pathlib.Path(folder_path).mkdir(exist_ok=True)
@@ -623,29 +683,49 @@ def main():
             starting_epoch = resume_step // len(train_dataloader)
             completed_steps = resume_step // args.gradient_accumulation_steps
             resume_step -= starting_epoch * len(train_dataloader)
+    
+
     # update the progress_bar if load from checkpoint
     if(args.just_download == 'y'):
         exit()
     progress_bar.update(completed_steps)
     eval_result = None
     best_eval_result = {'a':-1}
+   
+    ini_sparse_weight = 1
+    sw_inc = 5
     for epoch in range(starting_epoch, args.num_train_epochs):
+        #print_sparsity_info(model) 
         model.train()
         if args.with_tracking:
             total_loss = 0
         if args.resume_from_checkpoint and epoch == starting_epoch and resume_step is not None:
-            # We skip the first `n` batches in the dataloader when resuming from a checkpoint
             active_dataloader = accelerator.skip_first_batches(train_dataloader, resume_step)
         else:
             active_dataloader = train_dataloader
         for step, batch in enumerate(active_dataloader):
             outputs = model(**batch)
             loss = outputs.loss
-            # We keep track of the loss at each epoch
+            
+            if args.sparse == 'y':
+                sparsity_loss = compute_sparsity_loss(model)
+                sparsity_weight = 1e-5 #ini_sparse_weight + (sw_inc * epoch)  # Adjust this weight as needed
+                loss += sparsity_weight * sparsity_loss
+            
             if args.with_tracking:
                 total_loss += loss.detach().float()
             loss = loss / args.gradient_accumulation_steps
             accelerator.backward(loss)
+
+
+            #total_grad_norm = 0
+            #for param in model.parameters():
+            #    if param.grad is not None:
+            #        total_grad_norm += param.grad.data.norm(2).item() ** 2
+            #total_grad_norm = total_grad_norm ** 0.5
+            #print(f"Epoch {epoch}, Step {step}: Gradient norm = {total_grad_norm}")
+
+
             if step % args.gradient_accumulation_steps == 0 or step == len(train_dataloader) - 1:
                 optimizer.step()
                 lr_scheduler.step()
@@ -670,7 +750,6 @@ def main():
                 outputs = model(**batch)
             predictions = outputs.logits.argmax(dim=-1) if not is_regression else outputs.logits.squeeze()
             predictions, references = accelerator.gather((predictions, batch["labels"]))
-            # If we are in a multiprocess environment, the last batch has duplicates
             if accelerator.num_processes > 1:
                 if step == len(eval_dataloader) - 1:
                     predictions = predictions[: len(eval_dataloader.dataset) - samples_seen]
@@ -684,8 +763,15 @@ def main():
 
         eval_metric = compute_with_retry(metric)
         eval_result = eval_metric
+        
+        # Measure activation sparsity
+        if args.sparse == 'y':
+            activation_sparsity = measure_weight_sparsity(model,  accelerator)
+            eval_result['weight_sparsity'] = activation_sparsity
+
         if(list(eval_result.values())[0] > list(best_eval_result.values())[0]):
             best_eval_result = eval_result
+
 
         logger.info(f"epoch {epoch}: {eval_metric}")
 
