@@ -325,9 +325,6 @@ def main():
     args = parse_args()
     
     ''' lr override for cola and stsb because they seem to become unstable at low lr'''
-    if(args.task_name in ["cola","stsb"]):
-        args.learning_rate = 2e-2
-        print(f"Learning rate overriden")
 
     args.job_id += f"{args.activation}"
     if(args.activation == 'DELU'):
