@@ -11,6 +11,7 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_sc
 from common.DELU import DELU
 from common.utility import replace_activations
 from common.utility import get_activation_by_name
+from common.utility import get_model
 from common.cnn_csv_utils import *
 
 import csv
@@ -102,27 +103,9 @@ class SmallNet(nn.Module):
         out = self.classifier(out)
         return out  # Make sure to return the output
 
-def get_model(model_name):
-    if model_name == 'resnet18':
-        model = models.resnet18(pretrained=False)
-        num_ftrs = model.fc.in_features
-        model.fc = nn.Linear(num_ftrs, 10)
-    elif model_name == 'vgg16':
-        model = models.vgg16(pretrained=False)
-        num_ftrs = model.classifier[6].in_features
-        model.classifier[6] = nn.Linear(num_ftrs, 10)
-    elif model_name == 'densenet121':
-        model = models.densenet121(pretrained=False)
-        num_ftrs = model.classifier.in_features
-        model.classifier = nn.Linear(num_ftrs, 10)
-    elif model_name == 'smallnet':
-        model = SmallNet()
-        num_ftrs = model.classifier.in_features
-        model.classifier = nn.Linear(num_ftrs, 10)
-    else:
-        raise ValueError(f"Unsupported model: {model_name}")
 
-    return model
+
+
 def train(model, train_loader, optimizer, criterion, device, epoch, total_epochs):
     model.train()
     start_time = time.time()
@@ -186,7 +169,7 @@ def main(args):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     train_loader, test_loader = load_data(args.data_dir, args.batch_size)
-    model = get_model(args.model).to(device)
+    model = get_model(args.model,args.task).to(device)
     activation = get_activation_by_name(args.activation,float(args.a),float(args.b),float(args.c),float(args.d))
     replace_activations(model, nn.ReLU, activation)
 
@@ -222,7 +205,7 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='MNIST CNN Training')
-    parser.add_argument('--model', type=str, default='resnet18', choices=['resnet18', 'vgg16', 'densenet121','smallnet'],
+    parser.add_argument('--model', type=str, default='resnet18', choices=['resnet18', 'vgg16', 'densenet121','smallnet','shufflenet'],
                         help='model architecture')
     parser.add_argument('--data-dir', type=str, default='./data', help='data directory')
     parser.add_argument('--batch-size', type=int, default=64, help='input batch size for training')

@@ -10,6 +10,7 @@ from torch.utils.data import DataLoader
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 from common.DELU import DELU
 from common.utility import replace_activations
+from common.utility import get_model
 from common.utility import get_activation_by_name
 from common.cnn_csv_utils import * 
 import csv
@@ -38,24 +39,7 @@ def load_data(data_dir, batch_size):
 
     return train_loader, test_loader
 
-def get_model(model_name):
-    if model_name == 'resnet18':
-        model = models.resnet18(pretrained=False)
-        model.conv1 = nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3, bias=False)
-    elif model_name == 'vgg16':
-        model = models.vgg16(pretrained=False)
-        model.features[0] = nn.Conv2d(1, 64, kernel_size=3, padding=1)
-    elif model_name == 'densenet121':
-        model = models.densenet121(pretrained=False)
-        model.features.conv0 = nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3, bias=False)
-    else:
-        raise ValueError(f"Unsupported model: {model_name}")
 
-    # Modify the last layer for EMNIST (47 classes)
-    num_ftrs = model.fc.in_features
-    model.fc = nn.Linear(num_ftrs, 47)
-
-    return model
 
 def train(model, train_loader, optimizer, criterion, device, epoch, total_epochs):
     model.train()
@@ -108,7 +92,7 @@ def main(args):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     train_loader, test_loader = load_data(args.data_dir, args.batch_size)
-    model = get_model(args.model).to(device)
+    model = get_model(args.model,args.task).to(device)
 
     activation = get_activation_by_name(args.activation, float(args.a) , float(args.b),args.c,args.d)
 
@@ -144,7 +128,7 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='EMNIST CNN Training')
-    parser.add_argument('--model', type=str, default='resnet18', choices=['resnet18', 'vgg16', 'densenet121'],
+    parser.add_argument('--model', type=str, default='resnet18', choices=['resnet18', 'vgg16', 'densenet121','shufflenet'],
                         help='model architecture')
     parser.add_argument('--data-dir', type=str, default='./data', help='data directory')
     parser.add_argument('--batch-size', type=int, default=64, help='input batch size for training')

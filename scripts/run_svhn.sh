@@ -13,5 +13,5 @@ export b
 export c
 export d
 for seed in 41 42 43 44 45; do
-  parallel -j 1 -u "conda activate double_env_6;python source/run_svhn.py --task svhn --model resnet18 --epochs 50 --batch-size 128 --lr 0.001 --seed {2} --activation {1} --a $a --b $b --c $c --d $d" ::: "${activations[@]}" ::: $seed
+  parallel -j 1 -u "conda activate double_env_6;python source/run_svhn.py --task svhn --model shufflenet --epochs 50 --batch-size 128 --lr 0.001 --seed {2} --activation {1} --a $a --b $b --c $c --d $d" ::: "${activations[@]}" ::: $seed
 done
