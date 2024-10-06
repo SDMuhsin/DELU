@@ -27,7 +27,7 @@ export NUM_EPOCHS
 export LEARNING_RATE
 # Run the script for each model, task, and seed
 for MODEL in "${MODELS[@]}"; do
-    for TASK in mrpc rte cola stsb; do
+    for TASK in cola; do
 
 
 		export MODEL TASK activation
@@ -45,7 +45,7 @@ for MODEL in "${MODELS[@]}"; do
 		    --overwrite_saves y \
 		    --activation $activation \
 		    --store_best_result y \
-		    --sparse y \
+		    --sparse n \
 		    --a $a \
 		    --b $b \
 		    --c $c \

@@ -91,7 +91,7 @@ def plot_results(fadelu, target_activation):
     fig, ax1 = plt.subplots(figsize=(10, 6))
 
     # Plot DELU and target activation
-    ax1.plot(x.numpy(), y_fadelu.detach().numpy(), label='DELU')
+    ax1.plot(x.numpy(), y_fadelu.detach().numpy(), label='FADELU')
     ax1.plot(x.numpy(), y_target.detach().numpy(), label=target_activation)
     ax1.set_xlabel('x')
     ax1.set_ylabel('Activation')
@@ -109,7 +109,7 @@ def plot_results(fadelu, target_activation):
     lines2, labels2 = ax2.get_legend_handles_labels()
     ax1.legend(lines1 + lines2, labels1 + labels2, loc='upper left')
 
-    plt.title(f'$DELU_{{{a:.2f},{b:.2f},{c:.2f},{d:.2f}}}$ vs {target_activation}\nMSE: {mse:.4f}')
+    plt.title(f'$FADELU_{{{a:.2f},{b:.2f},{c:.2f},{d:.2f}}}$ vs {target_activation}\nMSE: {mse:.4f}')
     plt.grid(True)
     plt.savefig(f'delu_vs_{target_activation}.png')
     plt.close()

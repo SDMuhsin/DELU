@@ -122,7 +122,7 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Fashion MNIST CNN Training')
-    parser.add_argument('--model', type=str, default='resnet18', choices=['resnet18', 'vgg16', 'densenet121','shufflenet'],
+    parser.add_argument('--model', type=str, default='resnet18', choices=['resnet34','resnet18', 'vgg16', 'densenet121','shufflenet','mobilenetv2'],
                         help='model architecture')
     parser.add_argument('--data-dir', type=str, default='./data', help='data directory')
     parser.add_argument('--batch-size', type=int, default=64, help='input batch size for training')
