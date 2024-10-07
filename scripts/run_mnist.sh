@@ -12,5 +12,5 @@ export c
 export d
 
 for seed in 41 42 43 44 45; do
-  parallel -j 1 -u "conda activate double_env_6;python source/run_mnist.py --model alexnet --task mnist --epochs 10 --batch-size 64 --lr 0.001 --seed {2} --activation {1} --a $a --b $b --c $c --d $d" ::: "${activations[@]}" ::: $seed
+  parallel -j 1 -u "conda activate double_env_6;python source/run_mnist.py --model resnet50 --task mnist --epochs 10 --batch-size 64 --lr 0.001 --seed {2} --activation {1} --a $a --b $b --c $c --d $d" ::: "${activations[@]}" ::: $seed
 done
