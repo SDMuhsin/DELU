@@ -73,6 +73,9 @@ def get_model(model_name, dataset):
     if model_name == 'resnet18':
         model = models.resnet18(pretrained=False)
         num_ftrs = model.fc.in_features
+
+        if(dataset in ['kmnist','emnist']):
+             model.conv1 = nn.Conv2d(input_channels, 64, kernel_size=7, stride=2, padding=3, bias=False)
         model.fc = nn.Linear(num_ftrs, output_dim)
     elif model_name == 'alexnet':
         model = models.alexnet(pretrained=False)
