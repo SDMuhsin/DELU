@@ -61,11 +61,10 @@ def save_results(args, best_epoch, best_top1_accuracy, top5_accuracy, precision,
     initialize_csv(file_path)
 
     activation_name = args.activation
-    if args.activation == 'DELU':
+    if args.activation in ['DELU','ADELU']:
         activation_name += f"_a{args.a}_b{args.b}"
     elif args.activation == 'FADELU':
         activation_name += f"_a{args.a}_b{args.b}_c{args.c}_d{args.d}"
-
     new_result = {
         'Model': args.model,
         'Total Epochs': args.epochs,
@@ -95,7 +94,7 @@ def configuration_exists(args):
 
     # Construct the activation name
     activation_name = args.activation
-    if args.activation == 'DELU':
+    if args.activation in ['DELU','ADELU']:
         activation_name += f"_a{args.a}_b{args.b}"
     elif args.activation == 'FADELU':
         activation_name += f"_a{args.a}_b{args.b}_c{args.c}_d{args.d}"

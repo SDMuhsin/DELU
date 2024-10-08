@@ -23,7 +23,7 @@ def get_activation_by_name(activation_name,a=1.0,b=1.0,c=1.0,d=1.0):
         'CELU': nn.CELU(),
         'Hardtanh': nn.Hardtanh(),
         'DELU' : DELU(a,b),
-        'ADELU' : ADELU(),
+        'ADELU' : ADELU(a,b),
         'TDELU' : TDELU(),
         'ATDELU' : ATDELU(),
         'FADELU' : FADELU(a,b,c,d)
