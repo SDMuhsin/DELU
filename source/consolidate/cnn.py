@@ -30,7 +30,7 @@ def format_percentage(value):
     if pd.isna(value) or value == '-':
         return '-'
     try:
-        return f"{float(value) * 100:.2f}%"
+        return f"{float(value) * 100:.2f}"
     except ValueError:
         return value
 
@@ -62,7 +62,7 @@ def main():
         filtered_df = filtered_df.fillna('-')
 
         # Convert scores to percentages and round to two decimal places
-        score_columns = ['Top-1 Accuracy', 'Top-5 Accuracy']
+        score_columns = ['Top-1 Accuracy', 'Top-5 Accuracy','F1-score']
         for col in score_columns:
             if col in filtered_df.columns:
                 filtered_df[col] = filtered_df[col].apply(format_percentage)
