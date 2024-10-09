@@ -1,9 +1,9 @@
+PReLU
 ADELU
 SELU
 Softplus
 Softsign
 Mish
-PReLU
 RReLU
 DELU
 ReLU

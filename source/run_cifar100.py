@@ -81,6 +81,7 @@ def evaluate(model, test_loader, device):
 
     return top1_accuracy, top5_accuracy, precision, recall, f1
 
+import time
 def main(args):
     if(configuration_exists(args)):
         exit()
@@ -101,7 +102,8 @@ def main(args):
     best_top1_accuracy = 0
     best_results = None
     best_epoch = 0
-
+    
+    st = time.time()
     for epoch in range(1, args.epochs + 1):
         train(model, train_loader, optimizer, criterion, device, epoch, args.epochs)
         top1_accuracy, top5_accuracy, precision, recall, f1 = evaluate(model, test_loader, device)
@@ -119,6 +121,9 @@ def main(args):
             best_results = [args.model, args.epochs, args.activation, args.batch_size, args.seed, args.lr, 
                             epoch, top1_accuracy, top5_accuracy, precision, recall, f1]
             best_epoch = epoch
+    et = time.time()
+    tt_hr  = (et - st) / 60 
+    print(f"That took {tt_hr} minutes to train")
 
     # Save results
     save_results(args, best_epoch, best_top1_accuracy, top5_accuracy, precision, recall, f1)
