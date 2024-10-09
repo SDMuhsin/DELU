@@ -38,7 +38,6 @@ def process_dataset(task, args):
         filtered_df = get_median_of_5(filtered_df)
     
     return filtered_df
-
 def aggregate_results(datasets, args):
     all_results = {}
     complete_cases = set()
@@ -66,12 +65,15 @@ def aggregate_results(datasets, args):
                               (results['Learning Rate'] == lr) & 
                               (results['Batch Size'] == batch_size) & 
                               (results['Activation Function'] == activation)]
-                
                 if not row.empty:
-                    aggregated_table.loc[activation, f'{dataset}_Accuracy'] = row['Top-1 Accuracy'].values[0]
-                    aggregated_table.loc[activation, f'{dataset}_F1'] = row['F1-score'].values[0]
+                    top1_accuracy = round(row['Top-1 Accuracy'].values[0] * 100, 2)
+                    f1_score = round(row['F1-score'].values[0] * 100, 2)
+                    if args.f1.lower() == 'y':
+                        aggregated_table.loc[activation, f'{dataset}_Scores'] = f'{top1_accuracy}/{f1_score}'
+                    else:
+                        aggregated_table.loc[activation, f'{dataset}_Scores'] = f'{top1_accuracy}'
                 else:
-                    warnings.warn(f"Incomplete data for {activation} in {dataset}")
+                    print(f"Warning: Incomplete data for {activation} in {dataset}")
     
     return aggregated_table
 
@@ -85,6 +87,7 @@ def main():
     parser.add_argument('--seed', type=int, help='Seed')
     parser.add_argument('--activation', type=str, help='Activation function')
     parser.add_argument('--mo5', type=str, default='y', help='Median of 5 best results (y/n)')
+    parser.add_argument('--f1', type=str, default='n', help='Include F1 score in results (y/n)')
     args = parser.parse_args()
 
     datasets = args.tasks.split(',')
