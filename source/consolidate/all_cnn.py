@@ -69,7 +69,7 @@ def aggregate_results(datasets, args):
                 
                 if not row.empty:
                     aggregated_table.loc[activation, f'{dataset}_Accuracy'] = row['Top-1 Accuracy'].values[0]
-                    aggregated_table.loc[activation, f'{dataset}_F1'] = row['F1-Score'].values[0]
+                    aggregated_table.loc[activation, f'{dataset}_F1'] = row['F1-score'].values[0]
                 else:
                     warnings.warn(f"Incomplete data for {activation} in {dataset}")
     
