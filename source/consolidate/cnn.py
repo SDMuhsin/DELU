@@ -20,11 +20,19 @@ def get_median_of_5(df):
         if len(group) != 5:
             print(f"Warning: Exactly 5 seeds are required for each unique combination when --mo5 is 'y', not the case for {x}")
             median_row = group.sort_values('Top-1 Accuracy', ascending=False).iloc[len(group) // 2]
-            median_row = median_row.fillna('-')
         else:
             median_row = group.sort_values('Top-1 Accuracy', ascending=False).iloc[2]
+        median_row = median_row.fillna('-')
         result.append(median_row)
     return pd.DataFrame(result)
+
+def format_percentage(value):
+    if pd.isna(value) or value == '-':
+        return '-'
+    try:
+        return f"{float(value) * 100:.2f}%"
+    except ValueError:
+        return value
 
 def main():
     parser = argparse.ArgumentParser(description='Filter and display MNIST results.')
@@ -50,6 +58,15 @@ def main():
         filtered_df = get_median_of_5(filtered_df)
 
     if not filtered_df.empty:
+        # Fill NaN values with '-'
+        filtered_df = filtered_df.fillna('-')
+
+        # Convert scores to percentages and round to two decimal places
+        score_columns = ['Top-1 Accuracy', 'Top-5 Accuracy']
+        for col in score_columns:
+            if col in filtered_df.columns:
+                filtered_df[col] = filtered_df[col].apply(format_percentage)
+
         # Convert DataFrame to a list of lists for tabulate
         table = filtered_df.values.tolist()
         headers = filtered_df.columns.tolist()
