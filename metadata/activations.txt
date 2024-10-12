@@ -1,3 +1,4 @@
+DELU
 PReLU
 ADELU
 SELU
