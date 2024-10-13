@@ -62,4 +62,16 @@ class FADELU(nn.Module):
         delu_part = x * torch.exp(-self.a * torch.exp(-self.b * x))
         tanh_part = self.c * torch.tanh(self.d * x)
         return delu_part + tanh_part
+class SGELU(nn.Module):
+    def __init__(self, alpha=1.702, beta=0.044):
+        super(SGELU, self).__init__()
+        self.alpha = alpha
+        self.beta = beta
 
+    def forward(self, x):
+        # Calculate the argument for the sigmoid function
+        sigmoid_arg = self.alpha * x + self.beta * x ** 3
+        # Apply the sigmoid function
+        sigmoid = torch.sigmoid(sigmoid_arg)
+        # Return the SGELU activation
+        return x * sigmoid

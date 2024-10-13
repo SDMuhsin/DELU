@@ -134,7 +134,7 @@ if __name__ == '__main__':
     parser.add_argument('--epochs', type=int, default=10, help='number of epochs to train')
     parser.add_argument('--lr', type=float, default=0.001, help='learning rate')
     parser.add_argument('--seed', type=int, default=41, help='random seed')
-    parser.add_argument('--activation', type=str, default='ReLU',choices=['FADELU','ADELU','ReLU', 'LeakyReLU', 'ELU', 'SELU', 'GELU', 'Tanh', 'Sigmoid','Hardswish', 'Mish', 'SiLU', 'Softplus', 'Softsign', 'Hardshrink','Softshrink', 'Tanhshrink', 'PReLU', 'RReLU', 'CELU', 'Hardtanh','DELU'],help='Activation function to use in the model')
+    parser.add_argument('--activation', type=str, default='ReLU',choices=['SGELU','FADELU','ADELU','ReLU', 'LeakyReLU', 'ELU', 'SELU', 'GELU', 'Tanh', 'Sigmoid','Hardswish', 'Mish', 'SiLU', 'Softplus', 'Softsign', 'Hardshrink','Softshrink', 'Tanhshrink', 'PReLU', 'RReLU', 'CELU', 'Hardtanh','DELU'],help='Activation function to use in the model')
     parser.add_argument('--a',type=float,default=1)
     parser.add_argument('--b',type=float,default=1)
     parser.add_argument('--c',type=float,default=1)
