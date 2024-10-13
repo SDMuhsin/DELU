@@ -1,5 +1,26 @@
 import torch
 import torch.nn as nn
+
+import torch.nn.functional as F
+class RGELU(nn.Module):
+    def __init__(self, sigma=0.1):
+        super(RGELU, self).__init__()
+        self.alpha = nn.Parameter(torch.ones(1))
+        self.sigma = sigma
+
+    def forward(self, x):
+        # Generate random noise on the same device as x
+        epsilon = torch.randn_like(x, device=x.device) * self.sigma
+        
+        # Ensure alpha is on the same device as x
+        alpha = self.alpha.to(x.device)
+        
+        # Compute the R-GELU activation
+        return x * torch.sigmoid(1.702 * (alpha * x + epsilon))
+
+    def extra_repr(self):
+        return f'sigma={self.sigma}'
+
 class DELU(nn.Module): # Dampened Exponential Linear Unit
 
     def __init__(self, a: float = 1.0, b: float = 1.0):
@@ -29,6 +50,15 @@ class DELU_faster(nn.Module):
     def forward(self, x):
         return x * torch.exp(-self.a * torch.exp(-self.b * x))
 
+class FastDELU(nn.Module):
+    def __init__(self, a: float = 1.0, b: float = 1.0):
+        super(FastDELU, self).__init__()
+        self.a = nn.Parameter(torch.tensor(a))
+        self.b = nn.Parameter(torch.tensor(b))
+
+    @torch.jit.script_method
+    def forward(self, x):
+        return x * torch.exp(-self.a * torch.exp(-self.b * x))
 
 class TDELU(nn.Module):  # Tanh Dampened Exponential Linear Unit
     def __init__(self, a: float = 0.5, b: float = 1.0):

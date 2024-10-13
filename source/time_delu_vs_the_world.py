@@ -1,10 +1,11 @@
 import torch
 import torch.nn as nn
-from common.DELU import DELU, FADELU
+from common.DELU import DELU as DELU, FADELU
 import time
 import csv
 import matplotlib.pyplot as plt
 
+#DELU = torch.jit.script(DELU())
 # Manually specified colors
 colors = {
     'DELU': '#e41a1c',
