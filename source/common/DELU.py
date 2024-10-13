@@ -75,3 +75,12 @@ class SGELU(nn.Module):
         sigmoid = torch.sigmoid(sigmoid_arg)
         # Return the SGELU activation
         return x * sigmoid
+
+
+class SWLU(nn.Module):
+    def __init__(self, alpha=1.0):
+        super(SWLU, self).__init__()
+        self.alpha = nn.Parameter(torch.tensor(alpha))
+
+    def forward(self, x):
+        return x * torch.sigmoid(self.alpha * x)

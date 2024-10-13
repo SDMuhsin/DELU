@@ -1,3 +1,4 @@
+SWLU
 SGELU
 DELU
 PReLU
