@@ -3,24 +3,24 @@ import torch.nn as nn
 import math
 import torch.nn.functional as F
 
-class RGELU_sig(nn.Module):
-    def __init__(self, sigma=0.1):
-        super(RGELU, self).__init__()
-        self.alpha = nn.Parameter(torch.ones(1))
-        self.sigma = sigma
+class SRGELU(nn.Module):
+    def __init__(self, beta=0.1):
+        super(SRGELU, self).__init__()
+        self.beta = beta
 
     def forward(self, x):
-        # Generate random noise on the same device as x
-        epsilon = torch.randn_like(x, device=x.device) * self.sigma
+        # Ensure beta is on the same device as x
+        beta = torch.tensor(self.beta, device=x.device, dtype=x.dtype)
         
-        # Ensure alpha is on the same device as x
-        alpha = self.alpha.to(x.device)
+        # Compute the sign of x
+        sign_x = torch.sign(x)
         
-        # Compute the R-GELU activation
-        return x * torch.sigmoid(1.702 * (alpha * x + epsilon))
+        # Compute the argument for the Gaussian CDF
+        arg = x + beta * sign_x
+        
+        # Compute SRGELU
+        return x * torch.special.ndtr(arg)
 
-    def extra_repr(self):
-        return f'sigma={self.sigma}'
 class RGELU(nn.Module):
     def __init__(self, sigma=0.1):
         super(RGELU, self).__init__()
