@@ -1,7 +1,8 @@
 import torch
 import torch.nn as nn
-
+import math
 import torch.nn.functional as F
+
 class RGELU_sig(nn.Module):
     def __init__(self, sigma=0.1):
         super(RGELU, self).__init__()
