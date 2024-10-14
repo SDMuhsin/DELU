@@ -3,6 +3,20 @@ import torch.nn as nn
 import math
 import torch.nn.functional as F
 
+
+class SEGELU(nn.Module):
+    def __init__(self, gamma=0.1):
+        super(SEGELU, self).__init__()
+        self.gamma = gamma
+
+    def forward(self, x):
+        # Exact GELU implementation
+        gelu = 0.5 * x * (1 + torch.erf(x / math.sqrt(2)))
+        
+        # SE-GELU modification
+        return gelu * (1 + self.gamma * torch.exp(-torch.abs(x)))
+
+
 class SRGELU(nn.Module):
     def __init__(self, beta=0.1):
         super(SRGELU, self).__init__()

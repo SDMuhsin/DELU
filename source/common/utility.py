@@ -1,5 +1,5 @@
 import torch.nn as nn
-from common.DELU import DELU,ADELU,TDELU,ATDELU,FADELU,SGELU,SWLU,RGELU,SRGELU
+from common.DELU import DELU,ADELU,TDELU,ATDELU,FADELU,SGELU,SWLU,RGELU,SRGELU,SEGELU
 
 def get_activation_by_name(activation_name,a=1.0,b=1.0,c=1.0,d=1.0):
     activation_map = {
@@ -30,7 +30,8 @@ def get_activation_by_name(activation_name,a=1.0,b=1.0,c=1.0,d=1.0):
         'SGELU'  : SGELU(),
         'SWLU'   : SWLU(),
         'RGELU'  : RGELU(),
-        'SRGELU' : SRGELU()
+        'SRGELU' : SRGELU(),
+        'SEGELU' : SEGELU()
     }
     print(f"a = {a}, d = {d}") 
     if activation_name in activation_map:
