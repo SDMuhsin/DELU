@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 
 import torch.nn.functional as F
-class RGELU(nn.Module):
+class RGELU_sig(nn.Module):
     def __init__(self, sigma=0.1):
         super(RGELU, self).__init__()
         self.alpha = nn.Parameter(torch.ones(1))
@@ -20,7 +20,27 @@ class RGELU(nn.Module):
 
     def extra_repr(self):
         return f'sigma={self.sigma}'
+class RGELU(nn.Module):
+    def __init__(self, sigma=0.1):
+        super(RGELU, self).__init__()
+        self.alpha = nn.Parameter(torch.ones(1))
+        self.sigma = sigma
 
+    def forward(self, x):
+        # Generate random noise on the same device as x
+        epsilon = torch.randn_like(x, device=x.device) * self.sigma
+        
+        # Ensure alpha is on the same device as x
+        alpha = self.alpha.to(x.device)
+        
+        # Apply alpha and add noise
+        x_modified = alpha * x + epsilon
+        
+        # GELU approximation using tanh
+        return 0.5 * x_modified * (1 + torch.tanh(math.sqrt(2 / math.pi) * (x_modified + 0.044715 * torch.pow(x_modified, 3))))
+
+    def extra_repr(self):
+        return f'sigma={self.sigma}'
 class DELU(nn.Module): # Dampened Exponential Linear Unit
 
     def __init__(self, a: float = 1.0, b: float = 1.0):
