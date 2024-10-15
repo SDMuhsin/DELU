@@ -3,6 +3,32 @@ import torch.nn as nn
 import math
 import torch.nn.functional as F
 
+class HGELU(nn.Module):
+    def __init__(self, delta=0.1, omega=math.pi):
+        super(HGELU, self).__init__()
+        self.delta = delta
+        self.omega = omega
+
+    def forward(self, x):
+        # Ensure all operations are done on the same device as the input
+        device = x.device
+        
+        # Standard GELU computation
+        gelu = 0.5 * x * (1 + torch.erf(x / math.sqrt(2)))
+        
+        # Harmonic component
+        harmonic = 1 + self.delta * torch.sin(self.omega * x)
+        
+        # Combine GELU with harmonic component
+        return gelu * harmonic
+
+class SQGELU(nn.Module):
+    def __init__(self, epsilon=0.1):
+        super(SQGELU, self).__init__()
+        self.epsilon = epsilon
+
+    def forward(self, x):
+        return x * 0.5 * (1 + torch.erf((x + self.epsilon * x.pow(2)) / torch.sqrt(torch.tensor(2.0))))
 
 class SEGELU(nn.Module):
     def __init__(self, gamma=0.1):
