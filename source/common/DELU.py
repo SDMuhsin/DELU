@@ -3,6 +3,21 @@ import torch.nn as nn
 import math
 import torch.nn.functional as F
 
+class LOGGELU(torch.nn.Module):
+    def __init__(self, lambda_param=0.1):
+        super(LOGGELU, self).__init__()
+        self.lambda_param = lambda_param
+
+    def forward(self, x):
+        return x * torch.special.ndtr(x + self.lambda_param * torch.sign(x) * torch.log1p(torch.abs(x)))
+
+    @staticmethod
+    def gelu(x):
+        return x * 0.5 * (1 + torch.erf(x / math.sqrt(2)))
+
+    def extra_repr(self):
+        return f'lambda_param={self.lambda_param}'
+
 class HGELU(nn.Module):
     def __init__(self, delta=0.1, omega=math.pi):
         super(HGELU, self).__init__()
