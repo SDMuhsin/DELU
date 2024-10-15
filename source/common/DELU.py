@@ -2,7 +2,12 @@ import torch
 import torch.nn as nn
 import math
 import torch.nn.functional as F
+class RAF(nn.Module):
+    def __init__(self):
+        super(RAF, self).__init__()
 
+    def forward(self, x):
+        return torch.sign(x) * (1 - torch.exp(-torch.abs(x))) * (2 / (1 + torch.exp(-torch.abs(x))) - 1)
 class LOGGELU(torch.nn.Module):
     def __init__(self, lambda_param=0.1):
         super(LOGGELU, self).__init__()

@@ -35,7 +35,8 @@ def get_activation_by_name(activation_name,a=1.0,b=1.0,c=1.0,d=1.0):
         'SEGELU' : SEGELU(),
         'HGELU'  : HGELU(),
         'SQGELU' : SQGELU(),
-        'LOGGELU' : LOGGELU()
+        'LOGGELU' : LOGGELU(),
+        'RAF' : RAF()
     }
     print(f"a = {a}, d = {d}") 
     if activation_name in activation_map:
