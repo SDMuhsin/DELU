@@ -1,83 +1,85 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.special import erf
-from scipy.optimize import minimize
-import os
+from sklearn.metrics import mean_squared_error, mean_absolute_error
 
+BW =4
 def true_gelu(x):
-    """Implementation of the true GELU function"""
+    """True GELU implementation"""
     return 0.5 * x * (1 + erf(x / np.sqrt(2)))
 
-def proposed_gelu(x, k1, k2):
-    """Our proposed GELU approximation"""
+def analytical_gelu_approx(x, k1=1.702, k2=0.147):
+    """Analytical approximation of GELU"""
     return x * (1 / (1 + np.exp(-k1*x - k2*x**3)))
 
-def compute_metrics(func1, func2, x_range):
-    """Compute MSE, MAE, and RMSE between two functions"""
-    y1 = func1(x_range)
-    y2 = func2(x_range)
-    mse = np.mean((y1 - y2) ** 2)
-    mae = np.mean(np.abs(y1 - y2))
-    rmse = np.sqrt(mse)
-    return {'MSE': mse, 'MAE': mae, 'RMSE': rmse}
+def hardware_gelu_approx(x):
+    """Hardware approximation of GELU based on the VHDL implementation"""
+    DATA_WIDTH = BW
+    FRAC_BITS = BW // 2
+    NEG_TWO = -2 * (2**FRAC_BITS)
+    POS_TWO = 2 * (2**FRAC_BITS)
 
-# Generate data points for optimization
-x_train = np.linspace(-5, 5, 1000)
-y_train = true_gelu(x_train)
+    # Convert to fixed-point representation
+    x_fixed = np.round(x * (2**FRAC_BITS)).astype(int)
+    
+    result = np.zeros_like(x_fixed)
+    
+    for i, val in enumerate(x_fixed):
+        if val < NEG_TWO:
+            # Region 1: Near-zero linear approximation
+            result[i] = val >> 4  # x/16
+        elif val > POS_TWO:
+            # Region 3: Linear approximation
+            result[i] = val - (val >> 3)  # x - x/8
+        else:
+            # Region 2: Quadratic approximation
+            x_shifted = val >> 1  # x/2
+            x_squared = (val * val) >> FRAC_BITS
+            quad_term = x_squared >> 3
+            
+            if val < 0:
+                result[i] = x_shifted - quad_term
+            else:
+                result[i] = x_shifted + quad_term
+    
+    # Convert back to floating-point
+    return result.astype(float) / (2**FRAC_BITS)
 
-def objective(params):
-    """Objective function for optimization"""
-    k1, k2 = params
-    y_pred = proposed_gelu(x_train, k1, k2)
-    return np.mean((y_train - y_pred) ** 2)
+# Generate x values
+x = np.linspace(-3, 3, 1000)
 
-# Optimize parameters
-initial_guess = [1.0, 0.1]
-result = minimize(objective, initial_guess, method='Nelder-Mead')
-k1_opt, k2_opt = result.x
+# Calculate y values for each function
+y_true = true_gelu(x)
+y_analytical = analytical_gelu_approx(x)
+y_hardware = hardware_gelu_approx(x)
 
-# Create visualization
-x_test = np.linspace(-5, 5, 1000)
-y_true = true_gelu(x_test)
-y_approx = proposed_gelu(x_test, k1_opt, k2_opt)
+# Calculate error metrics
+mse_analytical = mean_squared_error(y_true, y_analytical)
+rmse_analytical = np.sqrt(mse_analytical)
+mae_analytical = mean_absolute_error(y_true, y_analytical)
 
-# Calculate metrics
-metrics = compute_metrics(
-    lambda x: true_gelu(x),
-    lambda x: proposed_gelu(x, k1_opt, k2_opt),
-    x_test
-)
+mse_hardware = mean_squared_error(y_true, y_hardware)
+rmse_hardware = np.sqrt(mse_hardware)
+mae_hardware = mean_absolute_error(y_true, y_hardware)
 
-# Create the visualization
+# Print error metrics
+print("Analytical Approximation:")
+print(f"MSE: {mse_analytical:.6f}")
+print(f"RMSE: {rmse_analytical:.6f}")
+print(f"MAE: {mae_analytical:.6f}")
+print("\nHardware Approximation:")
+print(f"MSE: {mse_hardware:.6f}")
+print(f"RMSE: {rmse_hardware:.6f}")
+print(f"MAE: {mae_hardware:.6f}")
+
+# Plot the results
 plt.figure(figsize=(12, 8))
-plt.plot(x_test, y_true, 'b-', label='True GELU', linewidth=2)
-plt.plot(x_test, y_approx, 'r--', label='Proposed Approximation', linewidth=2)
-plt.grid(True, alpha=0.3)
-plt.legend(fontsize=12)
-plt.xlabel('x', fontsize=12)
-plt.ylabel('y', fontsize=12)
-plt.title('GELU vs Proposed Approximation\n' + 
-          f'MSE: {metrics["MSE"]:.2e}, MAE: {metrics["MAE"]:.2e}, RMSE: {metrics["RMSE"]:.2e}\n' +
-          f'k₁: {k1_opt:.4f}, k₂: {k2_opt:.4f}', 
-          fontsize=14)
+plt.plot(x, y_true, label='True GELU', linewidth=2)
+plt.plot(x, y_analytical, label='Analytical Approximation', linestyle='--')
+plt.plot(x, y_hardware, label=f'Hardware Approximation ({BW}-bit)', linestyle=':', linewidth=2)
+plt.xlabel('x')
+plt.ylabel('GELU(x)')
+plt.title('GELU Approximations')
+plt.legend()
 
-# Create error plot
-plt.figure(figsize=(12, 4))
-plt.plot(x_test, np.abs(y_true - y_approx), 'g-', label='Absolute Error')
-plt.grid(True, alpha=0.3)
-plt.legend(fontsize=12)
-plt.xlabel('x', fontsize=12)
-plt.ylabel('Absolute Error', fontsize=12)
-plt.title('Approximation Error Distribution', fontsize=14)
-
-# Save plots
-os.makedirs('./saves', exist_ok=True)
-plt.figure(1)
-plt.savefig('./saves/gelu_comparison.png', dpi=300, bbox_inches='tight')
-plt.figure(2)
-plt.savefig('./saves/gelu_error.png', dpi=300, bbox_inches='tight')
-
-# Print optimized parameters and metrics
-print(f"Optimized parameters: k₁ = {k1_opt:.6f}, k₂ = {k2_opt:.6f}")
-for metric_name, value in metrics.items():
-    print(f"{metric_name}: {value:.2e}")
+plt.savefig("./saves/gelu_vs_hardware.png")
