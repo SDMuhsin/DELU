@@ -111,14 +111,13 @@ def train(model, train_loader, optimizer, criterion, device, epochs):
     # Create and save the pandas DataFrame
     df = pd.DataFrame(tracking_data)
     df.to_csv('fadelu_tracking.csv', index=False)
-
     # Plotting
-    plt.figure(figsize=(12, 8))
+    plt.figure(figsize=(14, 10))  # Increased figure size for better readability
     x = torch.linspace(-5, 5, 1000)
     # Plot GELU
     y_gelu = F.gelu(x)
-    plt.plot(x.numpy(), y_gelu.numpy(), 
-             label='GELU', 
+    plt.plot(x.numpy(), y_gelu.numpy(),
+             label='GELU',
              color='black', linewidth=2, zorder=epochs+2)
     # Plot initial FADELU
     y_initial = initial_fadelu(x).detach()
@@ -133,12 +132,12 @@ def train(model, train_loader, optimizer, criterion, device, epochs):
         plt.plot(x.numpy(), y.numpy(), color=colors[i], alpha=(i+1)/epochs, linewidth=1.5, zorder=i,
                  label=f'$FADELU_{{{fadelu.a.item():.2f},{fadelu.b.item():.2f},{fadelu.c.item():.2f},{fadelu.d.item():.2f}}}$, epoch {i+1}')
     plt.grid(True)
-    plt.title('FADELU Activation Function Evolution')
-    plt.xlabel('x')
-    plt.ylabel('FADELU(x)')
-    plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+    plt.title('FADELU Activation Function Evolution', fontsize=16)
+    plt.xlabel('x', fontsize=14)
+    plt.ylabel('FADELU(x)', fontsize=14)
+    plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left', fontsize=20)  # Increased fontsize for legend
     plt.tight_layout()
-    plt.savefig('fadelu_evolution.png')
+    plt.savefig('fadelu_evolution.png', dpi=300, bbox_inches='tight')  # Increased DPI for better quality
     plt.close()
 
 def evaluate(model, test_loader, device):
