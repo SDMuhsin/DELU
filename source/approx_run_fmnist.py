@@ -38,9 +38,9 @@ def load_data(data_dir, batch_size):
 
     return train_loader, test_loader
 
-
-def train(model, train_loader, optimizer, criterion, device):
+def train(model, train_loader, optimizer, criterion, device, epoch, total_epochs):
     model.train()
+    start_time = time.time()
     for batch_idx, (data, target) in enumerate(train_loader):
         data, target = data.to(device), target.to(device)
         optimizer.zero_grad()
@@ -48,6 +48,17 @@ def train(model, train_loader, optimizer, criterion, device):
         loss = criterion(output, target)
         loss.backward()
         optimizer.step()
+
+        elapsed_time = time.time() - start_time
+        progress = (batch_idx + 1) / len(train_loader)
+        estimated_total_time = elapsed_time / progress
+        remaining_time = estimated_total_time - elapsed_time
+        
+        print(f"\rEpoch {epoch}/{total_epochs} - Batch {batch_idx+1}/{len(train_loader)} - "
+              f"Est. time remaining: {remaining_time:.2f}s", end="")
+
+    print()
+
 
 def evaluate(model, test_loader, device):
     model.eval()
@@ -96,7 +107,7 @@ def main(args):
     best_epoch = 0
 
     for epoch in range(1, args.epochs + 1):
-        train(model, train_loader, optimizer, criterion, device)
+        train(model, train_loader, optimizer, criterion, device,epoch,args.epochs)
         top1_accuracy, top5_accuracy, precision, recall, f1 = evaluate(model, test_loader, device)
 
         print(f"Epoch {epoch}/{args.epochs}")
@@ -117,7 +128,45 @@ def main(args):
     os.makedirs('./saves', exist_ok=True)
     file_path = './saves/fmnist_results.txt'
 
-    save_results(args, best_epoch, best_top1_accuracy, top5_accuracy, precision, recall, f1)
+    #save_results(args, best_epoch, best_top1_accuracy, top5_accuracy, precision, recall, f1)
+    import copy
+    import json
+
+    trained_model_copy = copy.deepcopy(model)
+
+    # PWL stuff
+    print(f"Before PWL")
+    original_results = evaluate(model, test_loader, device)
+    print(original_results)
+
+    # Step 2: Create PWL approximation and replace activations
+    activation_func = get_activation_by_name(args.activation, args.a, args.b, args.c, args.d)
+    pwl_approximation = PWLApproximation(args.pwl_segments, activation_func)
+    replace_with_pwl(model, pwl_approximation)
+
+    print(f"After PWL")
+    pwl_results = evaluate(model, test_loader, device)
+    print(pwl_results)
+
+    # Step 3: Fine-tune the model with PWL approximation
+    optimizer = optim.Adam(model.parameters(), lr=args.lr)
+    #for epoch in range(1, 11):  # 10 epochs for fine-tuning
+    for epoch in range(1,args.progressive_epochs+1):
+        train(model, train_loader, optimizer, criterion, device,epoch,args.progressive_epochs)
+
+    finetuned_results = evaluate(model, test_loader, device)
+    print(f"After fine tuning")
+    print(finetuned_results)
+
+    # Step 4: Progressive replacement experiment
+    model = trained_model_copy#get_model(args.model, args.task).to(device)  # Reset the model
+    replace_activations(model, nn.ReLU, activation_func)  # Reset to original activation
+    optimizer = optim.Adam(model.parameters(), lr=args.lr)  # Reset optimizer
+    progressive_results = progressive_replacement_experiment(model, train_loader, test_loader, optimizer, criterion, device, args, pwl_approximation,train,evaluate)
+    print(f"After progressive fine tuning")
+    print(progressive_results)
+    # Save results to JSON
+    save_results_to_json(args, original_results, pwl_results, finetuned_results, progressive_results)
 
 
 if __name__ == '__main__':
@@ -135,6 +184,10 @@ if __name__ == '__main__':
     parser.add_argument('--b',type=float,default=1)
     parser.add_argument('--c',type=float,default=1)
     parser.add_argument('--d',type=float,default=1)
+    from common.approx import *
+    parser.add_argument('--pwl_segments', type=int, default=4, help='number of segments for PWL approximation')
+    parser.add_argument('--progressive_epochs', type=int, default=4, help='number of epochs for progressive replacement')
+
     args = parser.parse_args()
     
     main(args)

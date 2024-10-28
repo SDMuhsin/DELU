@@ -108,6 +108,6 @@ def save_results_to_json(args, original_results, pwl_results, finetuned_results,
         "progressive_results": progressive_results
     }
     
-    filename = f"./saves/{args.model}_{args.activation}_{args.pwl_segments}_segments.json"
+    filename = f"./saves/approx_{args.task}_{args.model}_{args.activation}_{args.pwl_segments}_segments.json"
     with open(filename, 'w') as f:
         json.dump(results, f, indent=4)
