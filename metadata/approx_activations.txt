@@ -1,5 +1,1 @@
 GELU
-ReLU
-ELU
-SELU
-Mish

@@ -11,6 +11,6 @@ export b
 export c
 export d
 
-for segments in 4 8 16; do
-  parallel -j 1 -u "conda activate double_env_6;python source/approx_run_mnist.py --model resnet18 --task mnist --epochs 20 --progressive_epochs 8 --batch-size 64 --lr 0.001 --seed 41 --pwl_segments {2} --activation {1} --a $a --b $b --c $c --d $d" ::: "${activations[@]}" ::: $segments
+for segments in 4; do
+  parallel -j 1 -u "conda activate double_env_6;python source/approx_run_mnist.py --model resnet18 --task mnist --epochs 0 --progressive_epochs 8 --batch-size 64 --lr 0.001 --seed 41 --pwl_segments {2} --activation {1} --a $a --b $b --c $c --d $d" ::: "${activations[@]}" ::: $segments
 done

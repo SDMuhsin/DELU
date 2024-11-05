@@ -1,6 +1,6 @@
 import torch.nn as nn
 from common.DELU import *
-from common.DELU import DELU,ADELU,TDELU,ATDELU,FADELU,SGELU,SWLU,RGELU,SRGELU,SEGELU
+from common.DELU import DELU,ADELU,TDELU,ATDELU,FADELU,SGELU,SWLU,RGELU,SRGELU,SEGELU,AnalyticalGELUApprox,HardwareGELUApprox
 
 def get_activation_by_name(activation_name,a=1.0,b=1.0,c=1.0,d=1.0):
     activation_map = {
@@ -36,7 +36,9 @@ def get_activation_by_name(activation_name,a=1.0,b=1.0,c=1.0,d=1.0):
         'HGELU'  : HGELU(),
         'SQGELU' : SQGELU(),
         'LOGGELU' : LOGGELU(),
-        'RAF' : RAF()
+        'RAF' : RAF(),
+        'AGELUA' : AnalyticalGELUApprox(),
+        'HGELUA' : HardwareGELUApprox(a,b)
     }
     print(f"a = {a}, d = {d}") 
     if activation_name in activation_map:

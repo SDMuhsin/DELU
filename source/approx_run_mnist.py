@@ -203,6 +203,23 @@ def main(args):
                             epoch, top1_accuracy, top5_accuracy, precision, recall, f1]
             best_epoch = epoch
 
+    ''' Evaluate Model with GELU'''
+    original_results = evaluate(model, test_loader, device)
+    print("Before any approximation",original_results)
+    
+    # Analytical GELU approximation
+    agelua = get_activation_by_name("AGELUA",float(args.a),float(args.b))
+    replace_activations(model,type(activation),agelua)
+    agelua_results = evaluate(model, test_loader, device)
+    print("After analytical approximation",agelua_results)
+
+
+    hgelua = get_activation_by_name("HGELUA",float(args.a),float(args.b))
+    replace_activations(model,type(agelua),hgelua)
+    hgelua_results = evaluate(model, test_loader, device)
+    print("After hardware approximation",hgelua_results)
+
+    exit()
     # Save results
     #save_results(args, best_epoch, best_top1_accuracy, top5_accuracy, precision, recall, f1)
 

@@ -2,6 +2,133 @@ import torch
 import torch.nn as nn
 import math
 import torch.nn.functional as F
+from typing import Optional
+import numpy as np
+
+class AnalyticalGELUApprox(nn.Module):
+    def __init__(self, k1=1.702, k2=0.147):
+        super().__init__()
+        self.k1 = k1
+        self.k2 = k2
+
+    def forward(self, x):
+        return x * (1 / (1 + torch.exp(-self.k1 * x - self.k2 * x**3)))
+
+import torch
+import torch.nn as nn
+import numpy as np
+from typing import Optional
+
+class HardwareGELUApprox(nn.Module):
+    """PyTorch module that simulates hardware-efficient GELU approximation."""
+    def __init__(self, data_width: int, frac_bits: int, lut_addr_bits: int = 6):
+        super().__init__()
+        
+        self.data_width = data_width
+        self.frac_bits = frac_bits
+        self.int_bits = data_width - frac_bits - 1  # 1 bit for sign
+        self.lut_addr_bits = lut_addr_bits
+        
+        # Compute range limits for fixed-point representation
+        self.max_val = 2.0 ** self.int_bits - 2.0 ** (-self.frac_bits)
+        self.min_val = -2.0 ** self.int_bits
+        self.scale = 2.0 ** self.frac_bits
+        
+        # Initialize LUT for critical region (-0.5 to 0.5)
+        self.register_buffer(
+            'lut', 
+            self._initialize_lut(),
+            persistent=True
+        )
+        
+        # Register region boundaries as buffers so they automatically move with the module
+        self.register_buffer('lut_bound', torch.tensor(self.scale * 1.0))
+        self.register_buffer('transition_bound', torch.tensor(self.scale * 3.0))
+        
+    def _initialize_lut(self) -> torch.Tensor:
+        """Initialize lookup table with precise GELU values for critical region."""
+        num_entries = 2 ** self.lut_addr_bits
+        x = torch.linspace(-1.0, 1.0, num_entries)
+        # True GELU values
+        y = 0.5 * x * (1 + torch.erf(x / np.sqrt(2)))
+        # Quantize to fixed-point precision
+        y_fixed = self._quantize(y)
+        return y_fixed
+        
+    def _quantize(self, x: torch.Tensor) -> torch.Tensor:
+        """Simulate fixed-point quantization."""
+        # Scale to fixed-point
+        x_scaled = x * self.scale
+        # Round to nearest integer
+        x_scaled = torch.round(x_scaled)
+        # Clamp to valid range
+        max_int = (2 ** (self.data_width - 1)) - 1
+        min_int = -(2 ** (self.data_width - 1))
+        x_scaled = torch.clamp(x_scaled, min_int, max_int)
+        return x_scaled
+        
+    def _fixed_to_float(self, x_fixed: torch.Tensor) -> torch.Tensor:
+        """Convert fixed-point values back to floating point."""
+        return x_fixed / self.scale
+        
+    def _lut_lookup(self, x: torch.Tensor) -> torch.Tensor:
+        """Perform LUT lookup for values in critical region."""
+        # Scale input to LUT address range
+        scale_factor = (2 ** self.lut_addr_bits - 1) / 2.0
+        indices = ((x / self.scale + 1.0) * scale_factor).long()
+        indices = torch.clamp(indices, 0, 2 ** self.lut_addr_bits - 1)
+        # Move indices to same device as LUT
+        indices = indices.to(self.lut.device)
+        return self.lut[indices]
+        
+    def _transition_region(self, x_fixed: torch.Tensor) -> torch.Tensor:
+        """Compute transition region values using shifts and adds."""
+        # Implement x/2 + x³/8 with fixed-point arithmetic
+        x_half = torch.div(x_fixed, 2, rounding_mode='trunc')
+        x_squared = torch.div(x_fixed * x_fixed, self.scale, rounding_mode='trunc')
+        x_cubed = torch.div(x_squared * x_fixed, self.scale, rounding_mode='trunc')
+        x_cubed_eighth = torch.div(x_cubed, 8, rounding_mode='trunc')
+        return x_half + x_cubed_eighth
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Forward pass implementing hardware GELU approximation."""
+        # Create result tensor on same device as input
+        result = torch.zeros_like(x)
+        
+        # Clamp input to valid fixed-point range
+        x_clamped = torch.clamp(x, self.min_val, self.max_val)
+        
+        # Convert to fixed-point representation
+        x_fixed = self._quantize(x_clamped)
+        
+        # Compute absolute value for region detection
+        x_abs = torch.abs(x_fixed)
+        
+        # LUT region
+        lut_mask = x_abs < self.lut_bound
+        if lut_mask.any():
+            result[lut_mask] = self._lut_lookup(x_fixed[lut_mask])
+        
+        # Transition region
+        trans_mask = (x_abs >= self.lut_bound) & (x_abs < self.transition_bound)
+        if trans_mask.any():
+            result[trans_mask] = self._transition_region(x_fixed[trans_mask])
+        
+        # Linear region
+        linear_mask = x_abs >= self.transition_bound
+        if linear_mask.any():
+            result[linear_mask] = x_fixed[linear_mask]
+            # Zero out large negative values
+            result[linear_mask & (x_fixed < 0)] = 0
+        
+        # Convert back to floating point
+        return self._fixed_to_float(result)
+    
+    def extra_repr(self) -> str:
+        """Additional information for string representation."""
+        return f'data_width={self.data_width}, frac_bits={self.frac_bits}, lut_addr_bits={self.lut_addr_bits}'
+
+
 class RAF(nn.Module):
     def __init__(self):
         super(RAF, self).__init__()
