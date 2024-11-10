@@ -239,6 +239,17 @@ class DELU(nn.Module): # Dampened Exponential Linear Unit
     def forward(self, x):
         return x * torch.exp(-self.a * torch.exp(-self.b * x))
 
+import math
+
+class SimpleDELU(nn.Module):
+    def __init__(self, a: float = 1.0, b: float = 1.0):
+        super(SimpleDELU, self).__init__()
+        self.b = b
+        # Pre-compute A = e^(-a * e)
+        self.A = math.exp(-a * math.e)
+
+    def forward(self, x):
+        return x * torch.pow(self.A, -self.b * x)
 
 class ADELU(nn.Module):  # Learned Dampened Exponential Linear Unit
     def __init__(self, initial_a: float = 1.0, initial_b: float = 1.0):

@@ -1,11 +1,11 @@
 import torch
 import torch.nn as nn
-from common.DELU import DELU_faster as DELU
+from common.DELU import DELU as DELU
 from tabulate import tabulate
 import time
 
 def run_comparison(input_size, num_runs=1000):
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cpu" if torch.cuda.is_available() else "cpu")
     
     delu = DELU().to(device)
     gelu = nn.GELU().to(device)
